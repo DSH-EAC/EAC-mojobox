@@ -18,7 +18,7 @@ Catalog、Pack/Lock、Evidence 和离线 `.dshpack`，EAC 负责本机计划、�
 | 3. 通用目录 | 移除插件数和 Pack 数的开发期门槛 | 团队可以持续扩充目录 |
 | 4. Pack 分类 | 支持 `function`、`appearance`、`workflow` | 功能包、外观包和工作流包可统一浏览与安装 |
 
-当前生产目录包含 18 条插件记录、4 个 Pack/Lock 和 3 条 `Parsed` Evidence。AIO 已拆为独立的
+当前生产目录包含 39 条插件记录、5 个 Pack/Lock 和 11 条 `Parsed` Evidence。AIO 已拆为独立的
 功能包与外观包。EAC 已具备 Pack 的只读计划和 Level 2 事务安装基线。
 
 尚未完成的内容：官方 Desktop Adapter、新 TUI Profile、Profile/Preset 包、服务端账号与发布

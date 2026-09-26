@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "node scripts/validate.mjs",
+    "test:eac": "node scripts/check-eac-coverage.mjs",
     "prepare:site": "node scripts/build-site.mjs",
     "dev": "npm run prepare:site && vite --config vite.config.mjs",
     "build": "npm run prepare:site && vite build --config vite.config.mjs",
