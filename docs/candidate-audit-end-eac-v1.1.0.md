@@ -27,6 +27,23 @@ v1 描述草稿，位于 `candidates/feature-packs/dev.dsh-eac.desktop-pack-1.1.
 只引用 `@dsh-eac/desktop-pack@1.1.0`，不复制内部成员，也不做 npm tgz 到 Feature Pack 的
 静默转换。该草稿在生成最终 `.dshpack`、固定归档摘要并完成隔离宿主验收前，不得进入生产索引。
 
+## 描述包复核（2026-09-30）
+
+临时描述包已按官方运行时清单规则复核：`formatVersion`、包 ID、版本、内核范围、插件引用
+和空 `overrides` 均通过。清单中的 `$schema` 元字段不属于仓库 Feature Pack Schema 的允许
+字段，已移除以保持 Schema 与归档内容一致。
+
+当前仍不能生成可发布归档或生产索引：
+
+- `candidates/feature-packs/dev.dsh-eac.desktop-pack-1.1.0/` 只有 `pack.json` 和说明文件，没有
+  `.dshpack`；
+- `@dsh-eac/desktop-pack@1.1.0` 在 npm registry 返回 `E404`，因此 `plugins[].ref` 目前没有
+  可被宿主按清单解析的公开 npm 来源；
+- 之前固定的 GitHub `.tgz` 是 npm 聚合包，不是 Feature Pack，也不能静默替代该引用。
+
+结论：描述包结构核验通过，但来源和真实归档未满足发布门槛；保持候选草稿状态，不生成
+`packs-index.json` 条目。
+
 ## 验证范围
 
 本记录只证明来源、版本、归档字节和格式差异；没有把 GitHub 页面、Schema 通过或下载成功

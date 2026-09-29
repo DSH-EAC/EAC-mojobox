@@ -1,5 +1,4 @@
 {
-  "$schema": "https://github.com/DSH-EAC/DSH-Desktop-EAC/blob/e7da2db37a53ca87c7fb1e00de6b5060e6a220ae/docs/schemas/feature-pack-pack.json",
   "formatVersion": 1,
   "id": "dev.dsh-eac.desktop-pack",
   "name": "DSH EAC Desktop Pack",
