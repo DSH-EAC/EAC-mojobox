@@ -64,7 +64,9 @@ MVP 使用宿主已经实现的 Feature Pack v1：
 - `pack.install` 一键安装；
 - 安装进度、失败结果、文件锁排队和重复安装保护。
 
-当前宿主最小分发清单尚未包含 `feature-pack-cli.js` 和 `feature-pack.js`，重新纳入宿主资源并通过打包完整性测试是 MVP 的宿主侧交付项。
+宿主资源装配已在 EAC 仓库 `feat/mojobox-host-resources` 的 `ad4e8c31` 纳入
+`feature-pack-cli.js` 和 `feature-pack.js`，定向资源契约测试已通过；完整 staged 分发树仍待
+补齐锁定内核 tarball 后复验。
 
 ## 5. 第一个正式 Pack
 
