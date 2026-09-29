@@ -1,5 +1,8 @@
 # 使用 coding agent 开发 Mojobox
 
+当前任务默认遵循 [MVP 开发边界与计划](mvp-development.md)：功能整合包目录使用宿主 Feature
+Pack v1；legacy Mojobox 格式不新增桥接；EAC 专属新能力暂缓。
+
 本指南让个人维护者可以把边界清楚的任务交给团队或 coding agent。所有任务都先读取仓库根目录
 `AGENTS.md`，检查分支与未提交改动，并且不得自行 commit、push、部署或发布。
 
@@ -104,7 +107,7 @@ Evidence、网站和 Host Adapter。选择最小兼容方案，至少增加一�
 
 1. diff 只包含任务相关修改，没有覆盖他人的未提交工作；
 2. 上游 URL、commit、版本和字段可追溯；
-3. digest 来自真实字节，Manifest 改动已同步 Lock/Evidence；
+3. digest 来自真实字节，Manifest 改动已重新生成 Lock，历史 Evidence 未被改写；
 4. 正反 fixture 都实际被 Validator 执行；
 5. Pack 分类只影响组织，没有偷偷加入安装语义；
 6. 旧 TUI Evidence 没被改成当前生态规则；

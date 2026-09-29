@@ -11,7 +11,12 @@
     "packageManifest": {
       "package": "@deepseek-ai/dsh-package-manifest",
       "manifestVersion": 1,
-      "typesPath": "packages/util/package-manifest/src/types.ts"
+      "typesPath": "packages/util/package-manifest/src/types.ts",
+      "patchList": {
+        "tag": "dsh-v0.1.7-alpha.1",
+        "revision": "c36a83ff6bb95e3f82cf79f9be7c724270a8aa61",
+        "source": "https://github.com/deepseek-ai/deepseek-harness/blob/c36a83ff6bb95e3f82cf79f9be7c724270a8aa61/packages/util/package-manifest/src/types.ts"
+      }
     }
   },
   "dshEcosystemSpec": {

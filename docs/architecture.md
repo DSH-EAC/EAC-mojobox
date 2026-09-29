@@ -1,9 +1,13 @@
 # Mojobox 架构与扩展边界
 
+> **当前主线**：Mojobox MVP 只维护功能整合包目录、归档和市场索引；一键安装由官方桌面已有
+> Host 插件和 Feature Pack CLI 完成。本文中的 Mojobox 自定义 Pack/Lock 与 EAC Adapter
+> 设计保留作 legacy 参考，不作为当前新增功能的默认方案。详见 [MVP 开发文档](mvp-development.md)。
+
 本文面向准备扩展 Mojobox 或 EAC Adapter 的开发者。规范字段以 `schemas/`、`fixtures/` 和固定的
 上游 revision 为准。
 
-## 1. EAC-first 系统边界
+## 1. 独立分发与宿主接入边界
 
 ```mermaid
 flowchart TB
@@ -19,8 +23,8 @@ flowchart TB
   DIST[dsh-distribution] -.完整环境边界.-> EAC
 ```
 
-Mojobox 不启动插件、不修改 profile、不持有安装锁。EAC 是当前首要宿主，拥有本机状态与 Level 2
-事务；公共数据不能包含 EAC 的 profile 路径、RPC、snapshot ID、ownership 或 journal。
+Mojobox 不启动插件、不修改 profile、不持有安装锁。图中的宿主事务是职责边界，不表示已接通
+当前 EAC。公共数据不能包含 EAC 的 profile 路径、RPC、snapshot ID、ownership 或 journal。
 
 ## 2. 四类协议输入
 
@@ -32,6 +36,10 @@ Mojobox 使用 `x-mojobox-package` 原样投影其中与目录相关的字段：
 
 投影是可选事实，不是 Mojobox 新插件协议。当前官方 loader 未必执行全部兼容约束，因此 Adapter
 不能仅凭该字段宣称插件可安装。
+
+`dsh.bundle.patch` 已按官方 `dsh-v0.1.7-alpha.1` 类型增量支持字符串或有序字符串列表，
+精确来源在 `officialHarness.packageManifest.patchList`。旧字符串仍合法，不额外限制数组
+长度或唯一性。其余投影未宣称全面迁移到该版本，旧 `profile.patchReload` 暂保留兼容。
 
 ### dsh-std Plugin Manifest
 
@@ -49,6 +57,10 @@ vendored `0.15` Schema；升级时必须审阅差异、更新 vendor、fixtures 
 
 Pack 的 `metadata.category` 可选，当前值为 `function`、`appearance`、`workflow`。旧 Pack 不分类仍
 合法；分类只供发现与筛选，EAC 的计划算法继续按 `components` 与 `requires` 工作。
+
+发布策略单独放在 `distribution.json.packCategories`，当前仅启用 `function`。未分类和外观包
+仍参加源数据校验，但不进入公开目录、Manifest 下载或归档。未来开放外观包只需补齐宿主行为
+与实测，再调整发布范围；不另建一套贡献和构建系统。
 
 ### 完整环境协议
 
@@ -94,6 +106,17 @@ Validator 依次检查：
 构建器复制下载文件、读取真实 artifact、生成稳定排序与固定 ZIP 时间的 `.dshpack`，最后生成
 网站消费的 `catalog.json`。Catalog 中插件会暴露 `packageMetadata`，Pack 保留 `metadata.category`。
 
+正式构建先校验源数据，再按发布策略选择包及其引用的插件。归档新增实际 `archiveSize` 和
+`archiveDigest`；下载失败或摘要不匹配时构建失败，不发布半成品。
+
+`npm run lock:pack -- catalog/packs/<id>.pack.json` 根据精确组件生成 Lock，不联网、不升级
+组件、不签发 Evidence。目录当前每个稳定 ID 保存一个版本，文件名与 ID 一致；发布内容改变
+应增加版本。历史发行文件由版本发布保存，不原地替换。
+
+`inspect:pack` 从 ZIP 独立读取并验证 Pack/Lock、组件元数据、对象集合和 SHA-256，不依赖
+源 Catalog，不联网、不执行或解压插件。大对象流式计算摘要，JSON 单文件限制 1 MiB。
+PR 与部署工作流在构建后检查每个归档，避免仅验证输入而未独立读取最终产物。
+
 ## 5. EAC Adapter 契约
 
 ```mermaid
@@ -111,8 +134,11 @@ sequenceDiagram
   A-->>U: 最终状态
 ```
 
-Adapter 分级：Level 0 浏览 Catalog；Level 1 生成本机计划；Level 2 执行事务。当前 EAC 已有 Level 2
-基线，仍需真实全新虚拟机、故障注入和发布包验收后才能称为生产就绪。
+Adapter 分级：Level 0 浏览 Catalog；Level 1 生成本机计划；Level 2 执行事务。上图是接入目标，
+不是已完成的 EAC UI 能力。官方 CLI 实验接入位于 `adapters/official-cli.mjs`，只复用宿主
+安装能力，并在明确隔离 home 中完成了合成 Bundle 安装、重复安装与禁用状态验证。
+EAC Feature Pack 使用另一套 `formatVersion: 1` 格式，即使后缀
+同为 `.dshpack` 也不能互换。网站已撤下未经验证的深链入口，详见 [宿主接入](host-adapter.md)。
 
 新增 Host Adapter 时只消费公共 Catalog，不复制 EAC 私有实现。缺少安装能力时保持浏览和下载，
 不暴露无效的安装按钮。
@@ -130,6 +156,11 @@ Adapter 分级：Level 0 浏览 Catalog；Level 1 生成本机计划；Level 2 �
 - `eacUpstream`：EAC 对齐基线。
 
 更新现行上游不能覆盖历史坐标。只有重新运行 suite 后才能签发新 Evidence。
+
+`evidence-suites.json` 固定历史 suite 的 ID、版本、摘要和准确 commit 源码链接，不再要求旧
+Evidence 的 suite 摘要等于今天的 validator 字节。登记历史输入不代表重新执行过测试。
+旧组件版本的 Evidence 可保留；构建只向当前插件关联版本、Manifest/artifact 摘要完全匹配的
+记录。当前版本摘要错误仍拒绝。网站等级汇总排除失败、撤回和过期记录。
 
 ## 7. 团队扩展顺序
 

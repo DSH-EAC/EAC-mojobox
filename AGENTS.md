@@ -7,6 +7,16 @@
 
 以最小、可验证的改动维护 Mojobox 的 Catalog、Pack/Lock、Evidence、静态网站与构建链。
 不要把 Mojobox 扩展成插件运行时、宿主安装器或完整环境迁移工具。
+`adapters/official-cli.mjs` 只负责读取计划与调用官方安装接口，不自行实现包管理；真实测试必须
+使用新建隔离 home，不能把用户日常 Profile 当测试目标。
+
+## 当前 MVP 边界
+
+当前主线是“功能整合包目录 + 宿主市场一键安装”。宿主安装格式采用官方桌面已有的
+Feature Pack v1（`formatVersion: 1`、`pack.json`、`packs-index.json`）。当前
+`packs.mojobox.dev/v1alpha1` Pack/Lock/归档链路冻结为 legacy，不作为 MVP 的宿主安装输入，
+不新增格式桥接。外观包、EAC 专属新协议/UI/bridge/事务和复杂迁移均暂缓，具体以
+`docs/mvp-development.md` 为准。
 
 ## 开始前
 
@@ -107,7 +117,7 @@
 
 - `manifestDigest` 是 Manifest 文件原始字节的 SHA-256。
 - `artifactDigest` 是精确下载 artifact 原始字节的 SHA-256。
-- 修改 Manifest 格式也会改变 digest，必须更新所有 Lock/Evidence 引用。
+- 修改 Manifest 格式也会改变 digest，必须重新生成 Lock；历史 Evidence 不改写，真实重新验证后新增记录。
 - 不能通过复制旧摘要、猜测摘要或只改字符串完成升级。
 - `evidenceLevel` 与 `result` 是独立事实，高等级 Evidence 也可以失败。
 - Schema 校验成功不等于安全、运行成功或宿主支持。

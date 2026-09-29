@@ -6,7 +6,8 @@
     "id": "dev.mojobox.focus-kit",
     "version": "0.1.0",
     "name": "专注工作包",
-    "description": "提供会话侧栏与 Markdown 人设能力的固定组合。"
+    "description": "提供会话侧栏与 Markdown 人设能力的固定组合。",
+    "category": "function"
   },
   "components": [
     { "id": "dev.omdsh.dsh-better-sidebar", "version": "0.12.2", "required": true },

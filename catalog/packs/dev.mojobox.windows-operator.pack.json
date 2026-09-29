@@ -6,7 +6,8 @@
     "id": "dev.mojobox.windows-operator",
     "version": "0.2.0",
     "name": "Windows 操作包",
-    "description": "面向 Windows 桌面操作、会话导航与并行工作流的固定测试组合。"
+    "description": "面向 Windows 桌面操作、会话导航与并行工作流的固定测试组合。",
+    "category": "function"
   },
   "components": [
     { "id": "dev.jing-hy.computer-user", "version": "0.3.6", "required": true },

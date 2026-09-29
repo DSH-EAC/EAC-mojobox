@@ -163,6 +163,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .notice.warning { color: var(--orange); }
 .evidence-row { display: grid; grid-template-columns: 22px 1fr; gap: 8px; margin-top: 14px; color: var(--green); }
 .evidence-row svg { width: 18px; height: 18px; }
+.evidence-warning { color: var(--orange); }
 .evidence-row strong { display: block; color: var(--ink); font-size: .73rem; }
 .evidence-row span { display: block; margin-top: 3px; color: var(--muted); font-size: .68rem; }
 .evidence-row span + span { font-family: "Cascadia Code", Consolas, monospace; font-size: .61rem; }
@@ -170,7 +171,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .component-list { margin-top: 10px; }
 .component-list button { width: 100%; min-height: 57px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 9px 0; border: 0; border-bottom: 1px solid var(--line); background: transparent; color: var(--ink); text-align: left; cursor: pointer; }
 .component-list strong { display: block; overflow-wrap: anywhere; font-size: .7rem; }
-.component-list small { display: block; margin-top: 3px; color: var(--muted); font-size: .65rem; }
+.component-list small { display: block; margin-top: 3px; overflow-wrap: anywhere; color: var(--muted); font-size: .65rem; }
 .component-list code { color: var(--muted); font-size: .58rem; }
 .detail-empty { min-height: 55vh; display: grid; place-content: center; justify-items: center; text-align: center; color: var(--muted); }
 .detail-empty > svg { width: 38px; height: 38px; color: #aab3ad; }

@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 import { readdir, readFile } from 'node:fs/promises'
-import { dirname, join, relative, resolve } from 'node:path'
+import { basename, dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import Ajv2020 from 'ajv/dist/2020.js'
 import addFormats from 'ajv-formats'
@@ -160,6 +160,7 @@ async function validateCatalog() {
   for (const path of pluginPaths) {
     const manifest = await load(path)
     if (plugins.has(manifest.id)) throw new Error(`Duplicate plugin id: ${manifest.id}`)
+    if (basename(path) !== `${manifest.id}.json`) throw new Error(`${path} filename must match plugin id`)
     plugins.set(manifest.id, { manifest, path })
   }
 
@@ -167,16 +168,23 @@ async function validateCatalog() {
   const lockPaths = (await jsonFiles('catalog/packs')).filter(path => path.endsWith('.lock.json'))
   if (lockPaths.length !== packPaths.length) throw new Error('Every maintained Pack requires a matching Lock')
 
+  const packIds = new Set()
   for (const packPath of packPaths) {
     const lockPath = packPath.replace('.pack.json', '.lock.json')
     const pack = await load(packPath)
     const lock = await load(lockPath)
+    if (basename(packPath) !== `${pack.metadata.id}.pack.json`) throw new Error(`${packPath} filename must match Pack id`)
+    if (packIds.has(pack.metadata.id)) throw new Error(`Duplicate Pack id: ${pack.metadata.id}`)
+    packIds.add(pack.metadata.id)
     const expectedPack = `${pack.metadata.id}@${pack.metadata.version}`
     if (lock.pack !== expectedPack) throw new Error(`${lockPath} locks ${lock.pack}, expected ${expectedPack}`)
 
     const packComponents = new Map(pack.components.map(component => [component.id, component]))
     if (packComponents.size !== pack.components.length) throw new Error(`${packPath} contains duplicate components`)
     if (lock.components.length !== packComponents.size) throw new Error(`${lockPath} component count differs from its Pack`)
+    if (new Set(lock.components.map(component => component.id)).size !== lock.components.length) {
+      throw new Error(`${lockPath} contains duplicate components`)
+    }
 
     for (const component of lock.components) {
       const declared = packComponents.get(component.id)
@@ -199,16 +207,28 @@ async function validateCatalog() {
   }
 
   const evidencePaths = await jsonFiles('catalog/evidence')
-  const suiteDigest = await digestFile(asPosix(relative(root, fileURLToPath(import.meta.url))))
+  // A historical result binds the suite that ran, not today's validator bytes.
+  const suites = await load('evidence-suites.json')
+  const suiteKeys = new Set()
+  for (const suite of suites) {
+    const key = `${suite.id}@${suite.version}`
+    if (suiteKeys.has(key) || !/^sha256:[a-f0-9]{64}$/.test(suite.digest)
+      || !/^https:\/\/github\.com\/[^/]+\/[^/]+\/blob\/[a-f0-9]{40}\/.+/.test(suite.source)) {
+      throw new Error(`Invalid or duplicate evidence suite: ${key}`)
+    }
+    suiteKeys.add(key)
+  }
   for (const path of evidencePaths) {
     const evidence = await load(path)
     const plugin = plugins.get(evidence.subject.id)
     if (!plugin) throw new Error(`${path} references unknown subject ${evidence.subject.id}`)
-    if (evidence.subject.version !== plugin.manifest.version) throw new Error(`${path} subject version mismatch`)
+    const suite = suites.find(item => item.id === evidence.suite.id && item.version === evidence.suite.version)
+    if (!suite || suite.digest !== evidence.suite.digest) throw new Error(`${path} suite digest mismatch`)
+    // Old versions stay as historical records; the builder excludes them from current claims.
+    if (evidence.subject.version !== plugin.manifest.version) continue
     if (evidence.subject.artifactDigest !== plugin.manifest.artifact?.digest) throw new Error(`${path} artifact digest mismatch`)
     if (evidence.manifestDigest !== await digestFile(plugin.path)) throw new Error(`${path} Manifest digest mismatch`)
     if (evidence.specifications.dshStdRevision !== vendoredRevision) throw new Error(`${path} dsh-std revision mismatch`)
-    if (evidence.suite.digest !== suiteDigest) throw new Error(`${path} suite digest mismatch`)
   }
 
   return { plugins: pluginPaths.length, packs: packPaths.length, locks: lockPaths.length, evidence: evidencePaths.length }

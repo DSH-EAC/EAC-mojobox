@@ -1,19 +1,18 @@
 import { createHash } from 'node:crypto'
+import { execFileSync } from 'node:child_process'
 import { createWriteStream } from 'node:fs'
 import { copyFile, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import { basename, dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { ZipArchive } from 'archiver'
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const generated = join(root, 'site', 'public', 'generated')
-const artifactCache = join(root, '.cache', 'artifacts')
+const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const fixedDate = new Date('1980-01-01T00:00:00Z')
 
-const readJson = async path => JSON.parse(await readFile(join(root, path), 'utf8'))
+const readJson = async (root, path) => JSON.parse(await readFile(join(root, path), 'utf8'))
 const sha256 = bytes => `sha256:${createHash('sha256').update(bytes).digest('hex')}`
 
-async function jsonFiles(directory) {
+async function jsonFiles(root, directory) {
   const entries = await readdir(join(root, directory), { withFileTypes: true })
   return entries
     .filter(entry => entry.isFile() && entry.name.endsWith('.json'))
@@ -21,7 +20,8 @@ async function jsonFiles(directory) {
     .sort()
 }
 
-async function fetchArtifact(manifest) {
+async function fetchArtifact(root, manifest) {
+  const artifactCache = join(root, '.cache', 'artifacts')
   const expected = manifest.artifact?.digest
   const url = manifest.artifact?.path
   if (!expected || !url) throw new Error(`${manifest.id} has no downloadable artifact`)
@@ -44,7 +44,7 @@ async function fetchArtifact(manifest) {
   return cachePath
 }
 
-async function createPackArchive(pack, lock, manifests) {
+async function createPackArchive(root, generated, pack, lock, manifests) {
   const filename = `${pack.metadata.id}-${pack.metadata.version}.dshpack`
   const outputPath = join(generated, 'downloads', filename)
   await mkdir(dirname(outputPath), { recursive: true })
@@ -55,8 +55,10 @@ async function createPackArchive(pack, lock, manifests) {
     const manifestBytes = await readFile(join(root, component.manifest))
     if (sha256(manifestBytes) !== component.manifestDigest) throw new Error(`${component.id} Manifest digest mismatch`)
     objects.set(component.manifestDigest, manifestBytes)
-    const path = await fetchArtifact(manifest)
-    objects.set(component.artifactDigest, await readFile(path))
+    const path = await fetchArtifact(root, manifest)
+    const artifactBytes = await readFile(path)
+    if (sha256(artifactBytes) !== component.artifactDigest) throw new Error(`${component.id} Lock artifact digest mismatch`)
+    objects.set(component.artifactDigest, artifactBytes)
   }
 
   await new Promise((resolveArchive, rejectArchive) => {
@@ -78,37 +80,58 @@ async function createPackArchive(pack, lock, manifests) {
     archive.finalize()
   })
 
-  return `generated/downloads/${filename}`
+  const bytes = await readFile(outputPath)
+  return {
+    archiveUrl: `generated/downloads/${filename}`,
+    archiveSize: bytes.length,
+    archiveDigest: sha256(bytes)
+  }
 }
 
-export async function buildSite() {
+export async function generateSite(root) {
+  const generated = join(root, 'site', 'public', 'generated')
+  const distribution = await readJson(root, 'distribution.json')
+  if (!Array.isArray(distribution.packCategories) || !distribution.packCategories.length ||
+      distribution.packCategories.some(category => !['function', 'appearance', 'workflow'].includes(category))) {
+    throw new Error('distribution.json must list supported packCategories')
+  }
+  const packPaths = (await jsonFiles(root, 'catalog/packs')).filter(path => path.endsWith('.pack.json'))
+  const selectedPacks = []
+  for (const path of packPaths) {
+    const pack = await readJson(root, path)
+    if (distribution.packCategories.includes(pack.metadata.category)) selectedPacks.push({ path, pack })
+  }
+  const publishedPluginIds = new Set(selectedPacks.flatMap(({ pack }) => pack.components.map(component => component.id)))
   await rm(generated, { recursive: true, force: true })
   await mkdir(join(generated, 'manifests'), { recursive: true })
   await mkdir(join(generated, 'packs'), { recursive: true })
 
-  const pluginPaths = await jsonFiles('catalog/plugins')
-  const evidencePaths = await jsonFiles('catalog/evidence')
-  const packPaths = (await jsonFiles('catalog/packs')).filter(path => path.endsWith('.pack.json'))
+  const pluginPaths = await jsonFiles(root, 'catalog/plugins')
+  const evidencePaths = await jsonFiles(root, 'catalog/evidence')
   const manifests = new Map()
+  const manifestDigests = new Map()
   const evidenceBySubject = new Map()
 
   for (const path of pluginPaths) {
-    const manifest = await readJson(path)
+    const manifest = await readJson(root, path)
+    if (!publishedPluginIds.has(manifest.id)) continue
     manifests.set(manifest.id, manifest)
+    manifestDigests.set(manifest.id, sha256(await readFile(join(root, path))))
     await copyFile(join(root, path), join(generated, 'manifests', basename(path)))
   }
 
   for (const path of evidencePaths) {
-    const evidence = await readJson(path)
+    const evidence = await readJson(root, path)
+    const manifest = manifests.get(evidence.subject.id)
+    if (!manifest || evidence.subject.version !== manifest.version ||
+        evidence.subject.artifactDigest !== manifest.artifact?.digest ||
+        evidence.manifestDigest !== manifestDigests.get(manifest.id)) continue
     const records = evidenceBySubject.get(evidence.subject.id) || []
     records.push(evidence)
     evidenceBySubject.set(evidence.subject.id, records)
   }
 
-  const plugins = pluginPaths.map(path => {
-    const manifest = manifests.get(basename(path, '.json'))
-    return manifest
-  }).filter(Boolean).map(manifest => ({
+  const plugins = [...manifests.values()].map(manifest => ({
     id: manifest.id,
     name: manifest.name,
     version: manifest.version,
@@ -122,10 +145,9 @@ export async function buildSite() {
   }))
 
   const packs = []
-  for (const packPath of packPaths) {
+  for (const { path: packPath, pack } of selectedPacks) {
     const lockPath = packPath.replace('.pack.json', '.lock.json')
-    const pack = await readJson(packPath)
-    const lock = await readJson(lockPath)
+    const lock = await readJson(root, lockPath)
     await copyFile(join(root, packPath), join(generated, 'packs', basename(packPath)))
     await copyFile(join(root, lockPath), join(generated, 'packs', basename(lockPath)))
     packs.push({
@@ -133,18 +155,25 @@ export async function buildSite() {
       lock,
       packUrl: `generated/packs/${basename(packPath)}`,
       lockUrl: `generated/packs/${basename(lockPath)}`,
-      archiveUrl: await createPackArchive(pack, lock, manifests)
+      ...await createPackArchive(root, generated, pack, lock, manifests)
     })
   }
 
   const catalog = {
     apiVersion: 'catalog.mojobox.dev/v1alpha1',
-    specifications: await readJson('spec-revisions.json'),
+    specifications: await readJson(root, 'spec-revisions.json'),
+    distribution,
     plugins: plugins.sort((a, b) => a.name.localeCompare(b.name)),
     packs: packs.sort((a, b) => a.metadata.name.localeCompare(b.metadata.name))
   }
   await writeFile(join(generated, 'catalog.json'), `${JSON.stringify(catalog, null, 2)}\n`)
   console.log(`Built static catalog with ${plugins.length} plugins and ${packs.length} Packs.`)
+  return catalog
+}
+
+export async function buildSite() {
+  execFileSync(process.execPath, [join(repositoryRoot, 'scripts', 'validate.mjs')], { stdio: 'inherit' })
+  return generateSite(repositoryRoot)
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

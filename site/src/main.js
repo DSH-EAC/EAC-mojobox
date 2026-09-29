@@ -10,7 +10,6 @@ import {
   ExternalLink,
   FileJson,
   Filter,
-  MonitorDown,
   PackageCheck,
   Search,
   ShieldCheck,
@@ -31,7 +30,6 @@ const iconSet = {
   ExternalLink,
   FileJson,
   Filter,
-  MonitorDown,
   PackageCheck,
   Search,
   ShieldCheck,
@@ -59,7 +57,9 @@ const escapeHtml = value => String(value ?? '')
 
 const assetUrl = path => `${base}${path}`
 const shortDigest = digest => digest ? `${digest.slice(0, 15)}…${digest.slice(-8)}` : '未发布'
+const evidenceStatus = record => record.revoked ? '已撤回' : record.expiresAt && Date.parse(record.expiresAt) <= Date.now() ? '已过期' : record.result === 'pass' ? '通过' : '失败'
 const highestEvidence = records => records.reduce((highest, record) => {
+  if (evidenceStatus(record) !== '通过') return highest
   return levelOrder.indexOf(record.evidenceLevel) > levelOrder.indexOf(highest) ? record.evidenceLevel : highest
 }, 'Declared')
 
@@ -70,10 +70,6 @@ function safeExternalUrl(value) {
   } catch {
     return '#'
   }
-}
-
-function eacDeepLink(kind, id) {
-  return `dsh-eac://mojobox/${kind}/${encodeURIComponent(id)}`
 }
 
 function refreshIcons() {
@@ -103,7 +99,7 @@ function filteredItems() {
     })
   }
   return catalog.packs.filter(pack => {
-    const matchesQuery = !query || `${pack.metadata.name} ${pack.metadata.id}`.toLowerCase().includes(query)
+    const matchesQuery = !query || `${pack.metadata.name} ${pack.metadata.id} ${pack.metadata.description}`.toLowerCase().includes(query)
     const matchesCategory = state.category === 'all' || pack.metadata.category === state.category
     return matchesQuery && matchesCategory
   })
@@ -144,7 +140,6 @@ function pluginDetail(plugin) {
     </div>
     <div class="detail-actions">
       <a class="command primary" href="${assetUrl(plugin.manifestUrl)}" download><i data-lucide="download"></i>Manifest</a>
-      <a class="command" href="${eacDeepLink('plugin', plugin.id)}"><i data-lucide="monitor-down"></i>在 EAC 中查看</a>
       <a class="icon-command" href="${sourceUrl}" target="_blank" rel="noreferrer" title="打开源码" aria-label="打开源码"><i data-lucide="external-link"></i></a>
     </div>
     <section class="detail-section">
@@ -173,13 +168,15 @@ function pluginDetail(plugin) {
       </dl>
     </section>` : ''}
     <section class="detail-section">
-      <div class="section-title"><h3>兼容证据</h3><span class="badge badge-${evidenceLevel.toLowerCase()}">${escapeHtml(evidenceLevel)}</span></div>
+      <div class="section-title"><h3>验证记录</h3><span class="badge badge-${evidenceLevel.toLowerCase()}">${escapeHtml(evidenceLevel)}</span></div>
+      <p class="section-note">徽标仅统计仍有效的通过记录。Declared / Parsed 不代表宿主运行兼容。</p>
       ${plugin.evidence.length ? plugin.evidence.map(record => `
-        <div class="evidence-row">
-          <i data-lucide="shield-check"></i>
+        <div class="evidence-row ${evidenceStatus(record) === '通过' ? '' : 'evidence-warning'}">
+          <i data-lucide="${evidenceStatus(record) === '通过' ? 'shield-check' : 'triangle-alert'}"></i>
           <div>
-            <strong>${escapeHtml(record.host?.name || '目录解析')} · ${escapeHtml(record.evidenceLevel)} · ${escapeHtml(record.result)}</strong>
+            <strong>${escapeHtml(record.host ? `${record.host.name} ${record.host.version}` : '目录解析')} · ${escapeHtml(record.evidenceLevel)} · ${escapeHtml(record.result)} · ${evidenceStatus(record)}</strong>
             <span>${escapeHtml(record.issuer)} · ${escapeHtml(record.host?.runtime || '不限定宿主')} · ${escapeHtml(record.specifications.admissionProfile || '通用范围')}</span>
+            <span>记录时间：${escapeHtml(record.testedAt)}${record.expiresAt ? ` · 到期：${escapeHtml(record.expiresAt)}` : ''}</span>
             <span>${escapeHtml(record.checks.map(check => `${check.id}:${check.result}`).join(' · '))}</span>
           </div>
         </div>`).join('') : '<p class="empty-inline">暂无可复验证据</p>'}
@@ -187,7 +184,7 @@ function pluginDetail(plugin) {
 }
 
 function packDetail(pack) {
-  const platforms = pack.requires?.platforms?.map(item => `${item.os}${item.arch?.length ? ` / ${item.arch.join(', ')}` : ''}`).join('、') || '宿主协商'
+  const platforms = pack.requires?.platforms?.map(item => `${item.os}${item.arch?.length ? ` / ${item.arch.join(', ')}` : ''}`).join('、') || '未限制（不代表跨平台实测）'
   return `
     <div class="detail-heading">
       <span class="detail-mark pack-detail-mark"><i data-lucide="boxes"></i></span>
@@ -198,15 +195,20 @@ function packDetail(pack) {
       <a class="command primary" href="${assetUrl(pack.archiveUrl)}" download><i data-lucide="archive"></i>.dshpack</a>
       <a class="command" href="${assetUrl(pack.packUrl)}" download><i data-lucide="file-json"></i>Manifest</a>
       <a class="command" href="${assetUrl(pack.lockUrl)}" download><i data-lucide="database"></i>Lock</a>
-      <a class="command" href="${eacDeepLink('pack', pack.metadata.id)}"><i data-lucide="monitor-down"></i>在 EAC 中查看</a>
     </div>
+    <p class="notice">请先确认宿主支持 Mojobox 格式及本包要求；当前生产包尚未完成运行验收。归档包含锁定组件，不保证其全部依赖可离线安装。</p>
+    <section class="detail-section">
+      <h3>下载校验</h3>
+      <dl class="facts"><div><dt>文件大小</dt><dd>${Number.isInteger(pack.archiveSize) ? `${pack.archiveSize.toLocaleString('zh-CN')} 字节` : '未提供'}</dd></div></dl>
+      ${pack.archiveDigest ? `<div class="digest-line"><code title="${escapeHtml(pack.archiveDigest)}">${escapeHtml(pack.archiveDigest)}</code><button class="copy-button" data-copy="${escapeHtml(pack.archiveDigest)}" type="button" title="复制归档 SHA-256" aria-label="复制归档 SHA-256"><i data-lucide="clipboard"></i></button></div>` : '<p class="section-note">此目录未提供归档摘要。</p>'}
+    </section>
     <section class="detail-section">
       <h3>组件</h3>
       <div class="component-list">
         ${pack.lock.components.map(component => `
           <button type="button" data-open-plugin="${escapeHtml(component.id)}">
-            <span><strong>${escapeHtml(component.id)}</strong><small>v${escapeHtml(component.version)}</small></span>
-            <code>${escapeHtml(shortDigest(component.artifactDigest))}</code>
+            <span><strong>${escapeHtml(component.id)}</strong><small>v${escapeHtml(component.version)} · ${pack.components.find(item => item.id === component.id).required ? '必需' : '可选'}</small><small>${escapeHtml(component.source)}</small></span>
+            <code title="${escapeHtml(component.artifactDigest)}">${escapeHtml(shortDigest(component.artifactDigest))}</code>
           </button>`).join('')}
       </div>
     </section>
@@ -218,6 +220,7 @@ function packDetail(pack) {
         <div><dt>安装能力</dt><dd>${escapeHtml(pack.requires?.hostCapabilities?.join('、') || '无额外要求')}</dd></div>
         <div><dt>锁定状态</dt><dd>精确版本与 SHA-256</dd></div>
       </dl>
+      <p class="section-note">以上为包作者声明的条件，精确锁定不代表宿主实测通过。</p>
     </section>`
 }
 
@@ -240,7 +243,7 @@ function render() {
   app.innerHTML = `
     <header class="topbar">
       <div class="brand"><span class="brand-mark"><span></span><span></span><span></span></span><div><strong>Mojobox</strong><small>DSH 生态目录</small></div></div>
-      <a class="repo-link" href="https://github.com/lanyun077/dsh-mojobox" target="_blank" rel="noreferrer" title="打开 GitHub 仓库" aria-label="打开 GitHub 仓库"><i data-lucide="code-2"></i><span>GitHub</span></a>
+      <a class="repo-link" href="https://github.com/DSH-EAC/dsh-mojobox" target="_blank" rel="noreferrer" title="打开 GitHub 仓库" aria-label="打开 GitHub 仓库"><i data-lucide="code-2"></i><span>GitHub</span></a>
     </header>
     <div class="summary-band">
       <strong>${catalog.plugins.length} <span>插件</span></strong>
@@ -254,12 +257,12 @@ function render() {
           <button type="button" data-tab="plugins" class="${state.tab === 'plugins' ? 'active' : ''}" role="tab" aria-selected="${state.tab === 'plugins'}"><i data-lucide="box"></i>插件</button>
           <button type="button" data-tab="packs" class="${state.tab === 'packs' ? 'active' : ''}" role="tab" aria-selected="${state.tab === 'packs'}"><i data-lucide="boxes"></i>Pack</button>
         </div>
-        <label class="search-field"><i data-lucide="search"></i><input type="search" value="${escapeHtml(state.query)}" placeholder="搜索名称或 ID" aria-label="搜索目录" /></label>
+        <label class="search-field"><i data-lucide="search"></i><input type="search" value="${escapeHtml(state.query)}" placeholder="搜索名称、ID 或包说明" aria-label="搜索目录" /></label>
         <div class="filter-heading"><i data-lucide="filter"></i><span>筛选</span></div>
         <label>产物状态<select id="availability" ${state.tab === 'packs' ? 'disabled' : ''}><option value="all">全部</option><option value="published" ${state.availability === 'published' ? 'selected' : ''}>已发布</option><option value="unpublished" ${state.availability === 'unpublished' ? 'selected' : ''}>未发布</option></select></label>
-        <label>证据等级<select id="evidence-filter" ${state.tab === 'packs' ? 'disabled' : ''}><option value="all">全部</option>${levelOrder.map(level => `<option value="${level.toLowerCase()}" ${state.evidence === level.toLowerCase() ? 'selected' : ''}>${level}</option>`).join('')}</select></label>
+        <label>有效通过等级<select id="evidence-filter" ${state.tab === 'packs' ? 'disabled' : ''}><option value="all">全部</option>${levelOrder.map(level => `<option value="${level.toLowerCase()}" ${state.evidence === level.toLowerCase() ? 'selected' : ''}>${level}</option>`).join('')}</select></label>
         <label>验证宿主<select id="host-filter" ${state.tab === 'packs' ? 'disabled' : ''}><option value="all">全部</option>${[...new Map(catalog.plugins.flatMap(plugin => plugin.evidence).filter(record => record.host).map(record => [record.host.id, record.host])).values()].map(host => `<option value="${escapeHtml(host.id)}" ${state.host === host.id ? 'selected' : ''}>${escapeHtml(host.name)}</option>`).join('')}</select></label>
-        <label>Pack 分类<select id="category-filter" ${state.tab === 'plugins' ? 'disabled' : ''}><option value="all">全部</option>${Object.entries(categoryLabels).map(([value, label]) => `<option value="${value}" ${state.category === value ? 'selected' : ''}>${label}</option>`).join('')}</select></label>
+        <label>Pack 分类<select id="category-filter" ${state.tab === 'plugins' ? 'disabled' : ''}><option value="all">全部</option>${Object.entries(categoryLabels).filter(([value]) => catalog.packs.some(pack => pack.metadata.category === value)).map(([value, label]) => `<option value="${value}" ${state.category === value ? 'selected' : ''}>${label}</option>`).join('')}</select></label>
       </aside>
       <section class="directory" aria-label="目录结果">
         <div class="directory-heading"><div><span class="eyebrow">${state.tab === 'plugins' ? 'COMPONENTS' : 'COLLECTIONS'}</span><h1>${state.tab === 'plugins' ? '插件目录' : '整合包目录'}</h1></div><span>${items.length} 项</span></div>

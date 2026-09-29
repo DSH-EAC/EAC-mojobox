@@ -1,24 +1,15 @@
-name: 发布静态目录
+name: 校验贡献与构建
 
 on:
+  pull_request:
   push:
     branches: [main]
-  workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: pages
-  cancel-in-progress: true
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,15 +22,8 @@ jobs:
       - run: npm run build
         env:
           BASE_PATH: /dsh-mojobox/
-      - uses: actions/configure-pages@v5
-      - name: 发布前校验归档
+      - name: 独立读取并校验下载归档
         run: |
           for pack in dist/generated/downloads/*.dshpack; do
             npm run inspect:pack -- "$pack"
           done
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
-      - name: 发布
-        id: deployment
-        uses: actions/deploy-pages@v4

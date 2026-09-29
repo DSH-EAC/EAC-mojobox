@@ -4,7 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node scripts/validate.mjs",
+    "test": "node scripts/validate.mjs && node --test scripts/*.test.mjs",
+    "lock:pack": "node scripts/lock-pack.mjs",
+    "inspect:pack": "node scripts/inspect-pack.mjs",
+    "host:pack": "node adapters/official-cli.mjs",
     "prepare:site": "node scripts/build-site.mjs",
     "dev": "npm run prepare:site && vite --config vite.config.mjs",
     "build": "npm run prepare:site && vite build --config vite.config.mjs",
@@ -14,7 +17,9 @@
     "ajv": "^8.20.0",
     "ajv-formats": "3.0.1",
     "archiver": "^8.0.0",
-    "vite": "^8.2.2"
+    "vite": "^8.2.2",
+    "yauzl": "3.4.0",
+    "tar-stream": "3.2.1"
   },
   "dependencies": {
     "lucide": "^1.37.0"
