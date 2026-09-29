@@ -22,9 +22,10 @@
 
 ## 决定
 
-候选暂不收录到生产 Catalog、Pack 或市场索引。不要为它生成 legacy Pack/Lock，也不要在
-Mojobox 内增加 npm tgz 到 Feature Pack v1 的静默桥接。后续若上游提供明确的 Feature Pack v1
-归档和索引条目，应以新的固定 release/commit 重新核验，并重新计算摘要。
+原始 npm tgz 暂不收录到生产 Catalog、Pack 或市场索引。Mojobox 已另建一个薄的 Feature Pack
+v1 描述草稿，位于 `candidates/feature-packs/dev.dsh-eac.desktop-pack-1.1.0/pack.json`，
+只引用 `@dsh-eac/desktop-pack@1.1.0`，不复制内部成员，也不做 npm tgz 到 Feature Pack 的
+静默转换。该草稿在生成最终 `.dshpack`、固定归档摘要并完成隔离宿主验收前，不得进入生产索引。
 
 ## 验证范围
 
