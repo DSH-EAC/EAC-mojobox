@@ -106,6 +106,15 @@ test('contributed archive is copied byte-for-byte; mismatch fails before replaci
   assert.deepEqual(await buildCatalog(root), result)
   const publicDir = join(root, 'site/public')
   assert.deepEqual(await verifyDownloads(publicDir), { verified: 1 })
+  const catalogPath = join(publicDir, 'generated/catalog.json')
+  const changed = structuredClone(result)
+  changed.packs[0].components[0].version = '9.9.9'
+  await writeFile(catalogPath, JSON.stringify(changed))
+  await assert.rejects(verifyDownloads(publicDir), /Catalog display differs/)
+  await buildCatalog(root)
+  await rm(join(publicDir, result.packs[0].archiveUrl))
+  await assert.rejects(verifyDownloads(publicDir), { code: 'ENOENT' })
+  await buildCatalog(root)
   const server = createServer((request, response) => {
     if (request.url !== `/dsh-mojobox/${result.packs[0].archiveUrl}`) { response.writeHead(404).end(); return }
     response.end(downloaded)

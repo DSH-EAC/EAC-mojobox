@@ -4,8 +4,8 @@
 
 ## 变更类型
 
-- [ ] Plugin Catalog
-- [ ] Pack / Pack Lock
+- [ ] 开发者整合包收录 / 原始产物
+- [ ] 历史 Plugin Catalog / Pack / Pack Lock
 - [ ] Evidence / Host Profile
 - [ ] Schema / Fixture / Validator
 - [ ] Static Web
@@ -28,6 +28,8 @@
 
 - [ ] `npm test`
 - [ ] `npm run build`
+- [ ] `npm run verify:downloads`
+- [ ] `npm run build:demo` 与 `npm run verify:downloads -- dist-demo --allow-demo`（框架或网站改动）
 - [ ] `BASE_PATH=/dsh-mojobox/ npm run build`（网站改动）
 - [ ] `git diff --check`
 
@@ -39,7 +41,7 @@
 
 ## 数据与证据检查
 
-- [ ] 未提交 `dist/`、`.cache/`、`site/public/generated/` 或其他生成物
+- [ ] 未提交 `dist/`、`dist-demo/`、`.cache/`、`site/public/generated/` 或其他生成物
 - [ ] 未提交凭据、用户数据或本机绝对路径
 - [ ] Manifest、artifact、suite 和 Host Descriptor 摘要已按需更新
 - [ ] Evidence 等级与真实验证范围一致

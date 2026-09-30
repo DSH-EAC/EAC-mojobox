@@ -62,7 +62,14 @@ Feature Pack v1（`formatVersion: 1`、`pack.json`、`packs-index.json`）。当
 
 验证：`npm test`。进入 Pack 时再运行 `npm run build`。
 
-### 添加或更新 Pack
+### 收录开发者整合包（当前主线）
+
+读取 `docs/intake.md`、`schemas/intake.schema.json`、`vendor/eac/` 与 `fixtures/intake/`。
+提交开发者归档和收录记录，不替开发者组合插件。运行 `npm test`、`npm run build`、
+`npm run verify:downloads`。正式目录允许为空；框架测试样本只进入 `dist-demo/`。
+静态检验不声称来源已解析、安装成功或运行安全。
+
+### 添加或更新 legacy Pack（历史维护）
 
 读取：`schemas/pack.schema.json`、`schemas/pack-lock.schema.json`、一对现有 Pack/Lock。
 

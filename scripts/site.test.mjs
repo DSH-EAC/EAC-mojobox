@@ -136,3 +136,48 @@ test('intake escapes developer/component fields and blocks unsafe source links',
   assert.match(site.app.innerHTML, /&lt;img src=x&gt;/)
   assert.doesNotMatch(site.app.innerHTML, /javascript:|<script>bad/)
 })
+
+test('HTTP, malformed JSON and invalid catalog failures show a load error instead of downloads', async () => {
+  for (const response of [
+    '({ok:false,status:503})',
+    '({ok:true,json:async()=>{throw new Error("Invalid JSON <script>")}})',
+    '({ok:true,json:async()=>({packs:null})})'
+  ]) {
+    const site = loadSite()
+    await site.run(`globalThis.fetch = async () => ${response}; start().catch(showLoadError)`)
+    assert.equal(site.app.className, 'app-error')
+    assert.match(site.app.innerHTML, /目录载入失败/)
+    assert.doesNotMatch(site.app.innerHTML, /<script>| download/)
+  }
+})
+
+test('search preserves the edit caret and waits for IME composition', () => {
+  const site = loadSite()
+  site.run(`
+    globalThis.handlers = {}; globalThis.renders = 0;
+    globalThis.search = { value: '中文测试', selectionStart: 2, addEventListener: (name, fn) => handlers[name] = fn,
+      focus() {}, setSelectionRange(start, end) { this.range = [start,end] } };
+    document.querySelector = selector => selector === '.search-field input' ? search : null;
+    render = () => { renders++ }; bindEvents();
+    handlers.input({target:search,isComposing:true});
+  `)
+  assert.equal(site.run('renders'), 0)
+  site.run('handlers.compositionend({target:search});')
+  assert.equal(site.run('renders'), 1)
+  assert.equal(site.run('JSON.stringify(search.range)'), '[2,2]')
+})
+
+test('clipboard denial offers a manual digest instead of an unhandled rejection', async () => {
+  const site = loadSite()
+  site.run(`
+    globalThis.handler = null;
+    globalThis.button = { dataset: {copy:'digest'}, previousElementSibling:{style:{}},
+      setAttribute(name,value) {this[name]=value}, addEventListener(name,fn) {handler=fn} };
+    document.querySelectorAll = selector => selector === '[data-copy]' ? [button] : [];
+    globalThis.navigator = {clipboard:{writeText:async()=>{throw new Error('Denied')}}};
+    bindEvents();
+  `)
+  await site.run('handler()')
+  assert.equal(site.run('button.title'), '复制失败，请手动选择摘要')
+  assert.equal(site.run('button.previousElementSibling.style.whiteSpace'), 'normal')
+})

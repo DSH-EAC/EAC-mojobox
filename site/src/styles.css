@@ -142,7 +142,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .detail-heading p { margin: 4px 0 0; overflow-wrap: anywhere; color: var(--muted); font-size: .69rem; }
 .detail-description { margin: 17px 0 0; color: var(--muted); font-size: .8rem; line-height: 1.6; }
 .detail-actions { display: flex; gap: 8px; margin-top: 20px; }
-.action-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
+.action-grid { display: grid; grid-template-columns: 1fr 1fr; }
+.action-grid .primary { grid-column: 1 / -1; }
 .command, .icon-command { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); text-decoration: none; font-size: .75rem; font-weight: 700; }
 .command.primary { border-color: var(--green); background: var(--green); color: white; }
 .icon-command { width: 38px; padding: 0; }

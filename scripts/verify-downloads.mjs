@@ -17,6 +17,10 @@ export async function verifyDownloads(directory, { allowDemo = false } = {}) {
     const bytes = await readFile(join(directory, pack.archiveUrl))
     const report = await inspectFeaturePack(bytes, pack.archiveDigest.slice(7))
     if (report.manifest.id !== id || report.manifest.version !== version || report.size !== pack.archiveSize) throw new Error('Download metadata mismatch')
+    const m = report.manifest
+    if (pack.format !== report.format || pack.metadata.name !== m.name || pack.metadata.description !== (m.description || '') ||
+        JSON.stringify(pack.components) !== JSON.stringify(m.plugins) || JSON.stringify(pack.requires) !== JSON.stringify(m.requires || {}) ||
+        JSON.stringify(pack.checks) !== JSON.stringify(report.checks) || pack.runtime !== report.runtime) throw new Error('Catalog display differs from inspected archive')
     const storedReport = JSON.parse(await readFile(join(directory, pack.reportUrl), 'utf8'))
     const storedManifest = JSON.parse(await readFile(join(directory, pack.packUrl), 'utf8'))
     if (JSON.stringify(report) !== JSON.stringify(storedReport) || JSON.stringify(report.manifest) !== JSON.stringify(storedManifest)) throw new Error('Download report/manifest mismatch')

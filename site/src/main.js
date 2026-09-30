@@ -257,6 +257,7 @@ function intakeDetail(pack) {
 }
 
 function renderIntake() {
+  const focusedId = document.activeElement?.dataset?.select
   state.tab = 'packs'
   const items = filteredItems()
   const selected = catalog.packs.find(pack => pack.metadata.id === state.selected)
@@ -278,6 +279,7 @@ function renderIntake() {
     </main>`
   bindEvents()
   refreshIcons()
+  if (focusedId) [...document.querySelectorAll('[data-select]')].find(button => button.dataset.select === focusedId)?.focus()
 }
 
 function selectedDetail() {
@@ -348,11 +350,18 @@ function bindEvents() {
     location.hash = `#/${state.tab}`
     render()
   }))
-  document.querySelector('.search-field input')?.addEventListener('input', event => {
+  const search = document.querySelector('.search-field input')
+  const updateSearch = event => {
     state.query = event.target.value
+    if (event.isComposing) return
+    const caret = event.target.selectionStart
     render()
-    document.querySelector('.search-field input')?.focus()
-  })
+    const input = document.querySelector('.search-field input')
+    input?.focus()
+    if (caret !== null) input?.setSelectionRange(caret, caret)
+  }
+  search?.addEventListener('input', updateSearch)
+  search?.addEventListener('compositionend', updateSearch)
   document.querySelector('#availability')?.addEventListener('change', event => { state.availability = event.target.value; render() })
   document.querySelector('#evidence-filter')?.addEventListener('change', event => { state.evidence = event.target.value; render() })
   document.querySelector('#host-filter')?.addEventListener('change', event => { state.host = event.target.value; render() })
@@ -360,9 +369,16 @@ function bindEvents() {
   document.querySelectorAll('[data-select]').forEach(button => button.addEventListener('click', () => selectItem(button.dataset.select)))
   document.querySelectorAll('[data-open-plugin]').forEach(button => button.addEventListener('click', () => selectItem(button.dataset.openPlugin, 'plugins')))
   document.querySelectorAll('[data-copy]').forEach(button => button.addEventListener('click', async () => {
-    await navigator.clipboard.writeText(button.dataset.copy)
-    button.classList.add('copied')
-    setTimeout(() => button.classList.remove('copied'), 1200)
+    try {
+      await navigator.clipboard.writeText(button.dataset.copy)
+      button.classList.add('copied')
+      button.setAttribute('aria-label', 'SHA-256 已复制')
+    } catch {
+      button.setAttribute('aria-label', '复制失败，请手动选择摘要')
+      button.title = '复制失败，请手动选择摘要'
+      const code = button.previousElementSibling
+      if (code) { code.style.whiteSpace = 'normal'; code.style.overflowWrap = 'anywhere' }
+    }
   }))
 }
 
@@ -377,12 +393,15 @@ async function start() {
   const response = await fetch(assetUrl('generated/catalog.json'))
   if (!response.ok) throw new Error(`HTTP ${response.status}`)
   catalog = await response.json()
+  if (!catalog || !Array.isArray(catalog.packs) || !Array.isArray(catalog.plugins)) throw new Error('目录数据格式错误')
   applyHash()
   render()
   window.addEventListener('hashchange', () => { applyHash(); render() })
 }
 
-start().catch(error => {
+function showLoadError(error) {
   app.className = 'app-error'
   app.innerHTML = `<strong>目录载入失败</strong><span>${escapeHtml(error.message)}</span>`
-})
+}
+
+start().catch(showLoadError)
