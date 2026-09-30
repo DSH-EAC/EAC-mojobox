@@ -39,9 +39,9 @@ export async function buildCatalog(root = rootDir, { checkOnly = false, demo = f
     await writeFile(join(output, 'downloads', filename), bytes)
     await writeFile(join(output, 'packs', `${record.id}.json`), JSON.stringify(m, null, 2) + '\n')
     await writeFile(join(output, 'reports', `${record.id}.json`), JSON.stringify(report, null, 2) + '\n')
-    packs.push({ format: record.format, metadata: { id: m.id, version: m.version, name: m.name, description: m.description || '', category: 'function' },
+    packs.push({ format: record.format, metadata: { id: m.id, version: m.version, name: m.name, description: m.description || '', category: record.category },
       author: record.author, license: record.license, source: record.source, requires: m.requires || {},
-      components: m.plugins, archiveUrl: `generated/downloads/${filename}`, archiveSize: report.size,
+      components: m.plugins, appearance: record.appearance, archiveUrl: `generated/downloads/${filename}`, archiveSize: report.size,
       archiveDigest: `sha256:${report.sha256}`, packUrl, reportUrl, checks: report.checks, runtime: report.runtime })
   }
   const catalog = { apiVersion: 'catalog.mojobox.dev/v1alpha1', mode: 'intake', demo, plugins: [], packs }

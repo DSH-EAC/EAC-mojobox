@@ -70,8 +70,9 @@ npm run build
 文件名必须与 ID 对应，组件不能重复。当前每个稳定 ID 只保存一个版本，不原地替换已经发布
 版本的内容。发布历史由版本发布保留。
 
-`distribution.json` 是公开分发范围的唯一配置，当前仅发布 `function`。外观包资料继续校验，
-不生成公开下载；未分类包也不会默认发布。例子见 [格式说明](docs/pack-format.md)。
+`distribution.json` 是公开分发范围的唯一配置，当前发布 `function` 和 `appearance`。
+外观包与皮肤包指同一类样式或整体外观修改，复用同一条收录和下载链路；未分类包不会默认发布。
+例子见 [格式说明](docs/pack-format.md)。
 
 ### Evidence
 

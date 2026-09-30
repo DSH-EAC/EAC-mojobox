@@ -4,10 +4,14 @@
 
 ## 当前支持范围
 
-第一版支持 `eac-feature-pack-v1` 薄功能包：ZIP 内必须有根 `pack.json`，可选根 `icon.png`。这是当前支持的输入格式，不是对所有 DSH 宿主兼容的承诺。
+第一版支持 `eac-feature-pack-v1` 薄 Feature Pack：ZIP 内必须有根 `pack.json`，可选根 `icon.png`。
+`function`、`appearance` 和 `workflow` 均可收录；外观包与皮肤包指同一类样式或整体外观修改。
+这是当前支持的输入格式，不是对所有 DSH 宿主兼容的承诺。
 
 - 至少一个插件引用；接受 npm 名、`github:owner/repo` 和 `builtin:目录名`。
 - 不解析或下载引用，也不运行插件。
+- 对 `appearance` 包，收录记录必须声明 `appearance` 元数据；皮肤加载器依赖、皮肤 ID、冲突、预览来源、安装结果和运行状态只作为来源声明提供给下游，
+  不作为 Mojobox 的安装或运行门禁。
 - 不接收 preset、skill、非空 overrides、内嵌插件代码或其他文件；遇到这些输入给出不支持原因，不静默转换。
 - 清单上限 1 MiB、图标上限 512 KiB、归档上限 2 MiB；图标检查 PNG 签名，不进行图片解码或安全认证。
 - 拒绝重复路径、符号链接、危险路径、加密成员、重复插件引用和明确标记的草稿。
@@ -15,7 +19,8 @@
 
 ## 提交方式
 
-开发者提供现成归档和来源，不要求 Mojobox 重新组合插件。首版采用仓库内保存并随静态站原样托管归档的方式；不自动抓取远端、不改写开发者产物。
+开发者提供现成归档和来源，不要求 Mojobox 重新组合插件。皮肤代码和素材由被引用的插件发布，
+Mojobox 只收录薄包清单及原始归档。首版采用仓库内保存并随静态站原样托管归档的方式；不自动抓取远端、不改写开发者产物。
 
 1. 将真实产物放入 `artifacts/<id>-<version>.dshpack`。
 2. 添加 `catalog/feature-packs/<id>.json`，示例结构如下（摘要必须替换为真实计算值）：
@@ -25,12 +30,34 @@
   "format": "eac-feature-pack-v1",
   "id": "org.example.tools",
   "version": "1.0.0",
+  "category": "function",
   "source": "https://github.com/example/tools/releases/tag/v1.0.0",
   "author": "Example author",
   "license": "MIT",
   "sha256": "填写实际归档的64位小写十六进制SHA-256"
 }
 ```
+
+外观包将 `category` 设为 `appearance`，并额外填写 `appearance` 对象。例如：
+
+```json
+{
+  "category": "appearance",
+  "appearance": {
+    "kind": "skin",
+    "loader": {
+      "id": "@dsh-eac/ui-skin-loader",
+      "version": "1.1.0",
+      "source": "https://github.com/DSH-EAC/dsh-ui-skin-loader"
+    },
+    "skinIds": ["maid-atelier"],
+    "conflicts": ["bodyAttr:theme"],
+    "previews": ["https://example.org/preview.png"]
+  }
+}
+```
+
+`appearance` 只描述收录事实，不是 loader 的运行协议。Mojobox 不安装、加载、切换或判断皮肤兼容性。
 
 `source` 是开发者来源页面，不是安装地址；要求 HTTPS 且不能包含 URL 用户名和密码。作者与许可证需人工核对来源，自动检查只能验证字段及其与清单的一致性，不构成法律核验。一个稳定 ID 当前只收录一个版本，更新时提交新的版本和真实摘要，历史版本由 Git 历史保留。
 

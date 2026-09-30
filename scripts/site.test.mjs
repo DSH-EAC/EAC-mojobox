@@ -105,6 +105,21 @@ const intakePack = { ...samplePack, format: 'eac-feature-pack-v1', author: 'Test
   source: 'https://example.org/release', reportUrl: 'generated/reports/sample.json',
   requires: { dsh: '>=0.1.7' }, components: [{ ref: '@example/test-only', version: '1.0.0' }] }
 
+test('appearance intake details show declared loader facts without runtime claims', () => {
+  const pack = { ...intakePack, metadata: { ...intakePack.metadata, category: 'appearance' }, appearance: {
+    kind: 'skin', loader: { id: '@dsh-eac/ui-skin-loader', version: '1.1.0', source: 'https://github.com/DSH-EAC/dsh-ui-skin-loader' },
+    skinIds: ['maid-atelier'], conflicts: ['bodyAttr:theme'], previews: ['https://example.org/preview.png']
+  } }
+  const site = loadSite('/', { mode: 'intake', demo: false, plugins: [], packs: [pack] })
+  site.run('state.selected = catalog.packs[0].metadata.id; render()')
+  assert.match(site.app.innerHTML, /外观包声明/)
+  assert.match(site.app.innerHTML, /ui-skin-loader/)
+  assert.match(site.app.innerHTML, /maid-atelier/)
+  assert.match(site.app.innerHTML, /宿主未测试/)
+  assert.match(site.app.innerHTML, /由下游 loader 或宿主负责/)
+  assert.match(site.app.innerHTML, /option value="appearance"/)
+})
+
 for (const base of ['/', '/dsh-mojobox/']) {
   test(`intake catalog renders downloads and truthful check scope at ${base}`, () => {
     const site = loadSite(base, { mode: 'intake', demo: true, plugins: [], packs: [intakePack] })

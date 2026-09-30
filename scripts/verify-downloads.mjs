@@ -11,6 +11,8 @@ export async function verifyDownloads(directory, { allowDemo = false } = {}) {
   for (const pack of catalog.packs) {
     const { id, version } = pack.metadata
     if (!/^[a-z0-9][a-z0-9._-]{2,63}$/.test(id) || !/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(version)) throw new Error('Invalid download identity')
+    if (!['function', 'appearance', 'workflow'].includes(pack.metadata.category)) throw new Error('Invalid download category')
+    if (pack.metadata.category === 'appearance' && !pack.appearance) throw new Error('Appearance metadata is missing')
     const filename = `${id}-${version}.dshpack`
     if (pack.archiveUrl !== `generated/downloads/${filename}` || pack.packUrl !== `generated/packs/${id}.json` || pack.reportUrl !== `generated/reports/${id}.json`) throw new Error('Download path mismatch')
     if (!/^sha256:[a-f0-9]{64}$/.test(pack.archiveDigest)) throw new Error('Missing download digest')

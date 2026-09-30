@@ -15,8 +15,11 @@ export const digest = bytes => createHash('sha256').update(bytes).digest('hex')
 
 export function validateRecord(record) {
   if (!checkRecord(record)) throw new Error(`Invalid intake record: ${ajv.errorsText(checkRecord.errors)}`)
-  const url = new URL(record.source)
-  if (url.username || url.password) throw new Error('Source URL must not contain credentials')
+  const sources = [record.source, record.appearance?.loader?.source, ...(record.appearance?.previews || [])].filter(Boolean)
+  for (const source of sources) {
+    const url = new URL(source)
+    if (url.username || url.password) throw new Error('Source URL must not contain credentials')
+  }
 }
 
 // Read bytes once: the bytes inspected are exactly those copied to the download directory.

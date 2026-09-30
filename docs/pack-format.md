@@ -5,7 +5,8 @@
 > [MVP 开发文档](mvp-development.md)。两种格式不互转，也不共用同一个安装入口。
 
 字段以 `schemas/pack.schema.json`、`schemas/pack-lock.schema.json` 为准。本轮未改变 wire
-版本；保留外观包和工作流分类，当前只发布功能包。
+版本；保留外观包和工作流分类。外观包与皮肤包统一归类为 `appearance`，当前收录策略见
+[项目定位与发展路线](project-positioning-and-roadmap.md)。
 
 ## 新包示例
 

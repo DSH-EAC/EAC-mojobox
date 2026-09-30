@@ -33,7 +33,7 @@ npm run preview:demo
 
 1. 开发者提供现成的薄 Feature Pack v1 归档。
 2. 将文件放入 `artifacts/<id>-<version>.dshpack`。
-3. 在 `catalog/feature-packs/<id>.json` 记录格式、身份、版本、来源、作者、许可证和真实 SHA-256。
+3. 在 `catalog/feature-packs/<id>.json` 记录格式、身份、版本、分类、来源、作者、许可证和真实 SHA-256；外观包另外填写 `appearance` 元数据。
 4. 执行以下检查和构建：
 
 ```bash
