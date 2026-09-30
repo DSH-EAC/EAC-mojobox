@@ -10,7 +10,10 @@
     "inspect:feature-pack": "node scripts/feature-pack.mjs",
     "build:intake": "node scripts/build-catalog.mjs",
     "host:pack": "node adapters/official-cli.mjs",
-    "prepare:site": "node scripts/build-site.mjs",
+    "prepare:site": "node scripts/build-catalog.mjs",
+    "build:demo": "node scripts/build-demo.mjs",
+    "preview:demo": "vite preview --config vite.config.mjs --outDir ../dist-demo",
+    "verify:downloads": "node scripts/verify-downloads.mjs",
     "dev": "npm run prepare:site && vite --config vite.config.mjs",
     "build": "npm run prepare:site && vite build --config vite.config.mjs",
     "preview": "vite preview --config vite.config.mjs"

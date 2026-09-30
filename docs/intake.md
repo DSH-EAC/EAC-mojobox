@@ -48,7 +48,9 @@ npm run build:intake
 
 `build:intake` 先检查全部输入，再生成 `site/public/generated/` 下的目录、清单、检验报告和原样下载文件。不通过时不会进入输出替换步骤；输出写入中的磁盘或权限失败会导致构建失败，不能部署该次产物。生成目录只用于当前构建，不作为历史发行存储。
 
-阶段一中网站仍使用旧数据模型，不能把 `build:intake` 生成目录当作已完成的网站集成；阶段二负责切换默认构建入口、网站展示和 CI。旧的 `inspect:pack` / `host:pack` 仅适用 legacy，不适用新收录归档。
+默认 `prepare:site`、`dev` 和 `build` 已切到新收录数据。网站展示作者、来源、内核声明、检查范围、原始归档、清单和报告下载。`npm run verify:downloads` 独立复核 `dist/` 中的文件、摘要、大小和报告；空正式目录合法。旧的 `inspect:pack` / `host:pack` 仅适用 legacy，不适用新收录归档。
+
+使用 `npm run build:demo` 和 `npm run preview:demo` 查看测试演示。演示仅写入 `.cache/intake-demo/` 与 `dist-demo/`，不会添加正式收录记录或覆盖正式构建。`npm run verify:downloads -- dist-demo --allow-demo` 可验证演示；没有 `--allow-demo` 时拒绝演示产物，发布流程不启用该参数。
 
 ## 检验结论
 

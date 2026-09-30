@@ -33,10 +33,7 @@ jobs:
           BASE_PATH: /dsh-mojobox/
       - uses: actions/configure-pages@v5
       - name: 发布前校验归档
-        run: |
-          for pack in dist/generated/downloads/*.dshpack; do
-            npm run inspect:pack -- "$pack"
-          done
+        run: npm run verify:downloads
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

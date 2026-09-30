@@ -23,10 +23,14 @@ Bash 中为 `BASE_PATH=/dsh-mojobox/ npm run build`。产物在 `dist/`，部署
 
 ## 下载与缓存
 
-组件缓存位于 `.cache/artifacts/<sha256>`，每次读取检查摘要。首次构建需要访问源地址，但
-不会安装或执行包代码。外部 PR 的检查不得持有部署凭据。
+默认构建只读本地收录记录和开发者归档，检查通过后原样复制下载文件，不联网解析插件。
+`npm run verify:downloads` 独立检查最终 `dist/` 下载、清单、报告和摘要，空目录合法。
 
-网络缓慢时先检查本机 7897 监听地址，再对当前下载进程临时使用代理，不写入全局配置。
-Node fetch 的代理支持与 Node 版本有关，不能仅设置环境变量就认为代理已生效。
+`npm run build:demo` 只生成 `dist-demo/`，`npm run preview:demo` 预览演示。
+测试样本来自 `fixtures/intake/`，不写进正式目录；演示校验需要显式 `--allow-demo`。
+发布工作流不使用该参数，也不上传演示目录。
+
+子路径演示构建同样设置 `BASE_PATH`；预览时需匹配路径，例如
+`npm run preview:demo -- --base /dsh-mojobox/`。旧 `.cache/artifacts/` 是 legacy 组件缓存，不属于当前构建输入。
 
 本轮未启用托管或发布站点。静态构建成功不表示宿主导入通过验证。

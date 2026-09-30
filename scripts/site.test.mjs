@@ -100,3 +100,39 @@ test('catalog text is escaped rather than rendered as active markup', () => {
   assert.ok(html.includes('&lt;img src=x onerror=&quot;alert(1)&quot;&gt;'))
   assert.doesNotMatch(html, /<img src=x/)
 })
+
+const intakePack = { ...samplePack, format: 'eac-feature-pack-v1', author: 'Test developer', license: 'MIT',
+  source: 'https://example.org/release', reportUrl: 'generated/reports/sample.json',
+  requires: { dsh: '>=0.1.7' }, components: [{ ref: '@example/test-only', version: '1.0.0' }] }
+
+for (const base of ['/', '/dsh-mojobox/']) {
+  test(`intake catalog renders downloads and truthful check scope at ${base}`, () => {
+    const site = loadSite(base, { mode: 'intake', demo: true, plugins: [], packs: [intakePack] })
+    site.run('state.selected = catalog.packs[0].metadata.id; render()')
+    const html = site.app.innerHTML
+    for (const path of [intakePack.archiveUrl, intakePack.packUrl, intakePack.reportUrl]) assert.ok(html.includes(`href="${base}${path}" download`))
+    assert.match(html, /测试演示/)
+    assert.match(html, /宿主运行尚未测试/)
+    assert.match(html, /Test developer/)
+    assert.match(html, /@example\/test-only/)
+    assert.doesNotMatch(html, />Lock<|data-open-plugin|有效通过等级/)
+    site.run('state.query = "does-not-exist"; render()')
+    assert.match(site.app.innerHTML, /没有匹配项/)
+  })
+}
+
+test('empty production intake and missing selection render without legacy specifications', () => {
+  const site = loadSite('/', { mode: 'intake', demo: false, plugins: [], packs: [] })
+  site.run('state.selected = "missing"; render()')
+  assert.match(site.app.innerHTML, /暂无正式收录/)
+  assert.match(site.app.innerHTML, /未找到此整合包/)
+  assert.doesNotMatch(site.app.innerHTML, /测试演示|href="\/generated\/downloads/)
+})
+
+test('intake escapes developer/component fields and blocks unsafe source links', () => {
+  const pack = { ...intakePack, author: '<img src=x>', source: 'javascript:alert(1)', components: [{ ref: '<script>bad</script>' }] }
+  const site = loadSite('/', { mode: 'intake', plugins: [], packs: [pack] })
+  site.run('state.selected = catalog.packs[0].metadata.id; render()')
+  assert.match(site.app.innerHTML, /&lt;img src=x&gt;/)
+  assert.doesNotMatch(site.app.innerHTML, /javascript:|<script>bad/)
+})

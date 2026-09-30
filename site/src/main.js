@@ -184,6 +184,7 @@ function pluginDetail(plugin) {
 }
 
 function packDetail(pack) {
+  if (pack.format === 'eac-feature-pack-v1') return intakeDetail(pack)
   const platforms = pack.requires?.platforms?.map(item => `${item.os}${item.arch?.length ? ` / ${item.arch.join(', ')}` : ''}`).join('、') || '未限制（不代表跨平台实测）'
   return `
     <div class="detail-heading">
@@ -224,6 +225,61 @@ function packDetail(pack) {
     </section>`
 }
 
+function intakeDetail(pack) {
+  return `
+    <div class="detail-heading"><span class="detail-mark pack-detail-mark"><i data-lucide="boxes"></i></span>
+      <div><span class="eyebrow">FEATURE PACK</span><h2>${escapeHtml(pack.metadata.name)}</h2><p>${escapeHtml(pack.metadata.id)}</p></div></div>
+    <p class="detail-description">${escapeHtml(pack.metadata.description)}</p>
+    <div class="detail-actions action-grid">
+      <a class="command primary" href="${assetUrl(pack.archiveUrl)}" download><i data-lucide="archive"></i>下载整合包</a>
+      <a class="command" href="${assetUrl(pack.packUrl)}" download><i data-lucide="file-json"></i>清单</a>
+      <a class="command" href="${assetUrl(pack.reportUrl)}" download><i data-lucide="package-check"></i>检验报告</a>
+    </div>
+    <section class="detail-section"><h3>发布信息</h3><dl class="facts">
+      <div><dt>版本</dt><dd>${escapeHtml(pack.metadata.version)}</dd></div>
+      <div><dt>开发者</dt><dd>${escapeHtml(pack.author)}</dd></div>
+      <div><dt>许可证</dt><dd>${escapeHtml(pack.license)}</dd></div>
+      <div><dt>格式</dt><dd>EAC Feature Pack v1</dd></div>
+      <div><dt>内核要求</dt><dd>${escapeHtml(pack.requires?.dsh || '作者未声明')}</dd></div>
+      <div><dt>来源</dt><dd>${catalog.demo ? '测试来源占位，不是真实发布' : `<a href="${escapeHtml(safeExternalUrl(pack.source))}" target="_blank" rel="noreferrer">开发者发布页面</a>`}</dd></div>
+    </dl></section>
+    <section class="detail-section"><h3>收录检验</h3>
+      <p>清单结构、归档布局和文件摘要已通过检查。</p>
+      <p class="section-note">插件来源尚未解析，宿主运行尚未测试。检查通过不代表安装兼容或安全认证。</p>
+    </section>
+    <section class="detail-section"><h3>下载校验</h3>
+      <p>${pack.archiveSize.toLocaleString('zh-CN')} 字节 · 开发者归档原始字节</p>
+      <div class="digest-line"><code>${escapeHtml(pack.archiveDigest)}</code><button class="copy-button" data-copy="${escapeHtml(pack.archiveDigest.slice(7))}" type="button" title="复制 SHA-256" aria-label="复制 SHA-256"><i data-lucide="clipboard"></i></button></div>
+    </section>
+    <section class="detail-section"><h3>声明的组件</h3><dl class="facts">
+      ${pack.components.map(component => `<div><dt>${escapeHtml(component.ref)}</dt><dd>${escapeHtml(component.version || '未指定版本')}</dd></div>`).join('')}
+    </dl><p class="section-note">版本及兼容条件由开发者声明，Mojobox 不安装或执行组件。</p></section>`
+}
+
+function renderIntake() {
+  state.tab = 'packs'
+  const items = filteredItems()
+  const selected = catalog.packs.find(pack => pack.metadata.id === state.selected)
+  app.className = 'app'
+  app.innerHTML = `
+    <header class="topbar"><div class="brand"><span class="brand-mark"><span></span><span></span><span></span></span><div><strong>Mojobox</strong><small>整合包目录</small></div></div>
+      <a class="repo-link" href="https://github.com/DSH-EAC/dsh-mojobox" target="_blank" rel="noreferrer">GitHub</a></header>
+    <div class="summary-band"><strong>${catalog.packs.length} <span>整合包</span></strong><span>收纳 · 检验 · 下载</span></div>
+    ${catalog.demo ? '<p class="notice warning" role="status">测试演示：以下样本仅验证收录与下载流程，不是真实功能包，请勿用于安装。</p>' : ''}
+    <main class="workspace">
+      <aside class="filters" aria-label="目录筛选">
+        <label class="search-field"><i data-lucide="search"></i><input type="search" value="${escapeHtml(state.query)}" placeholder="搜索名称、ID 或包说明" aria-label="搜索目录" /></label>
+        <p class="section-note">由开发者维护整合包，Mojobox 提供收录检查和原始文件下载。</p>
+      </aside>
+      <section class="directory" aria-label="目录结果"><div class="directory-heading"><div><span class="eyebrow">COLLECTIONS</span><h1>整合包目录</h1></div><span>${items.length} 项</span></div>
+        <div class="item-list">${items.length ? items.map(packRow).join('') : `<div class="no-results"><i data-lucide="boxes"></i><strong>${catalog.packs.length ? '没有匹配项' : '暂无正式收录的整合包'}</strong><span>${catalog.packs.length ? '调整搜索条件' : '开发者提交的归档通过收录检查后将在这里展示'}</span></div>`}</div>
+      </section>
+      <aside class="detail" id="detail" aria-label="目录详情">${selected ? intakeDetail(selected) : `<div class="detail-empty"><i data-lucide="box"></i><h2>${state.selected ? '未找到此整合包' : '整合包详情'}</h2><p>选择整合包查看开发者、检验范围和下载文件。</p></div>`}</aside>
+    </main>`
+  bindEvents()
+  refreshIcons()
+}
+
 function selectedDetail() {
   const plugin = catalog.plugins.find(item => item.id === state.selected)
   if (plugin) return pluginDetail(plugin)
@@ -238,6 +294,7 @@ function selectedDetail() {
 }
 
 function render() {
+  if (catalog.mode === 'intake') return renderIntake()
   const items = filteredItems()
   app.className = 'app'
   app.innerHTML = `
@@ -312,7 +369,8 @@ function bindEvents() {
 function applyHash() {
   const [, tab, encodedId] = location.hash.match(/^#\/(plugins|packs)(?:\/(.+))?$/) || []
   if (tab) state.tab = tab
-  state.selected = encodedId ? decodeURIComponent(encodedId) : null
+  try { state.selected = encodedId ? decodeURIComponent(encodedId) : null }
+  catch { state.selected = null }
 }
 
 async function start() {

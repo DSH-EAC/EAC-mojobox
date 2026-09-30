@@ -4,9 +4,10 @@
 Host Adapter 时再读[架构说明](docs/architecture.md)。使用 coding agent 时先让它读取
 [AGENTS.md](AGENTS.md)。
 
-当前 MVP 的目标是功能整合包目录和宿主市场一键安装。正式安装格式采用宿主 Feature Pack v1；
-旧 Mojobox Pack/Lock/归档链路只做 legacy 维护。开始新任务前先读
-[MVP 开发文档](docs/mvp-development.md)，不要新增格式桥接或 EAC 专属安装逻辑。
+当前主线为收纳、检验、展示和下载。新收录按[收录规范](docs/intake.md)提交
+`catalog/feature-packs/<id>.json` 与 `artifacts/<id>-<version>.dshpack`，运行 `npm test`、
+`npm run build` 和 `npm run verify:downloads`。不要求先完成宿主安装；运行证据只能来自真实测试。
+以下插件与 Pack/Lock 流程为历史维护参考，不会进入默认网站。不要新增格式桥接或安装逻辑。
 
 ## 1. 开发环境
 

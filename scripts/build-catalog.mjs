@@ -5,7 +5,7 @@ import { inspectFeaturePack, validateRecord } from './feature-pack.mjs'
 
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 
-export async function buildCatalog(root = rootDir, { checkOnly = false } = {}) {
+export async function buildCatalog(root = rootDir, { checkOnly = false, demo = false } = {}) {
   const recordsDir = join(root, 'catalog/feature-packs')
   const entries = (await readdir(recordsDir)).filter(name => name.endsWith('.json')).sort()
   const admitted = []
@@ -44,7 +44,7 @@ export async function buildCatalog(root = rootDir, { checkOnly = false } = {}) {
       components: m.plugins, archiveUrl: `generated/downloads/${filename}`, archiveSize: report.size,
       archiveDigest: `sha256:${report.sha256}`, packUrl, reportUrl, checks: report.checks, runtime: report.runtime })
   }
-  const catalog = { apiVersion: 'catalog.mojobox.dev/v1alpha1', mode: 'intake', plugins: [], packs }
+  const catalog = { apiVersion: 'catalog.mojobox.dev/v1alpha1', mode: 'intake', demo, plugins: [], packs }
   await writeFile(join(output, 'catalog.json'), JSON.stringify(catalog, null, 2) + '\n')
   console.log(`Validated and collected ${packs.length} developer archives.`)
   return catalog

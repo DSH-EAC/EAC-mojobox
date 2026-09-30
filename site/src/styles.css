@@ -161,6 +161,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .section-note, .notice { display: flex; align-items: flex-start; gap: 7px; margin: 11px 0 0; color: var(--muted); font-size: .7rem; line-height: 1.5; }
 .section-note svg, .notice svg { width: 15px; height: 15px; flex: 0 0 auto; }
 .notice.warning { color: var(--orange); }
+.app > .notice { padding: 12px clamp(18px, 4vw, 56px); margin: 0; background: var(--orange-soft); }
+.facts dt { overflow-wrap: anywhere; }
 .evidence-row { display: grid; grid-template-columns: 22px 1fr; gap: 8px; margin-top: 14px; color: var(--green); }
 .evidence-row svg { width: 18px; height: 18px; }
 .evidence-warning { color: var(--orange); }

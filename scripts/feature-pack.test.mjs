@@ -6,6 +6,8 @@ import { test } from 'node:test'
 import { ZipArchive } from 'archiver'
 import { digest, inspectFeaturePack, validateRecord } from './feature-pack.mjs'
 import { buildCatalog } from './build-catalog.mjs'
+import { verifyDownloads } from './verify-downloads.mjs'
+import { createServer } from 'node:http'
 
 const manifest = JSON.parse(await readFile(new URL('../fixtures/intake/valid.json', import.meta.url)))
 const duplicate = JSON.parse(await readFile(new URL('../fixtures/intake/invalid-duplicate.json', import.meta.url)))
@@ -102,6 +104,24 @@ test('contributed archive is copied byte-for-byte; mismatch fails before replaci
   assert.deepEqual(downloaded, bytes)
   assert.equal(result.packs[0].archiveDigest, `sha256:${digest(downloaded)}`)
   assert.deepEqual(await buildCatalog(root), result)
+  const publicDir = join(root, 'site/public')
+  assert.deepEqual(await verifyDownloads(publicDir), { verified: 1 })
+  const server = createServer((request, response) => {
+    if (request.url !== `/dsh-mojobox/${result.packs[0].archiveUrl}`) { response.writeHead(404).end(); return }
+    response.end(downloaded)
+  })
+  await new Promise(accept => server.listen(0, '127.0.0.1', accept))
+  try {
+    const response = await fetch(`http://127.0.0.1:${server.address().port}/dsh-mojobox/${result.packs[0].archiveUrl}`)
+    assert.equal(response.status, 200)
+    assert.equal(digest(Buffer.from(await response.arrayBuffer())), record.sha256)
+  } finally { await new Promise(accept => server.close(accept)) }
+  await buildCatalog(root, { demo: true })
+  await assert.rejects(verifyDownloads(publicDir), /cannot be published/)
+  assert.deepEqual(await verifyDownloads(publicDir, { allowDemo: true }), { verified: 1 })
+  await writeFile(join(publicDir, result.packs[0].reportUrl), '{}')
+  await assert.rejects(verifyDownloads(publicDir, { allowDemo: true }), /report\/manifest mismatch/)
+  await buildCatalog(root)
   const before = await readFile(join(root, 'site/public/generated/catalog.json'))
   await writeFile(artifactPath, await archive({ ...manifest, version: '2.0.0' }))
   await assert.rejects(buildCatalog(root), /SHA-256 mismatch/)
