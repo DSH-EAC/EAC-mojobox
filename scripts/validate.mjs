@@ -46,7 +46,8 @@ function describeErrors(validate) {
 }
 
 async function validateDocuments() {
-  const catalogFiles = await jsonFiles('catalog')
+  // Developer archives use the independent intake checker in npm test.
+  const catalogFiles = (await jsonFiles('catalog')).filter(path => !path.startsWith('catalog/feature-packs/'))
   const validFixtures = await jsonFiles('fixtures/valid')
   const invalidFixtures = await jsonFiles('fixtures/invalid')
 

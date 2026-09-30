@@ -12,6 +12,11 @@
 
 ## 当前 MVP 边界
 
+最新用户决策：优先交付收纳、检验、展示与下载框架，然后适配开发者整合包，最后进行宿主搭载测试。
+整合包内容由开发者维护。当前执行规范见 `docs/intake.md` 与 `docs/implementation-plan.md`；
+它们优先于下文历史的一键安装前置要求。新收录事实源为 `catalog/feature-packs/` 和 `artifacts/`，
+检查器为 `scripts/feature-pack.mjs`，收录构建为 `scripts/build-catalog.mjs`。不把 legacy Pack/Lock 规则套在新记录上。
+
 当前主线是“功能整合包目录 + 宿主市场一键安装”。宿主安装格式采用官方桌面已有的
 Feature Pack v1（`formatVersion: 1`、`pack.json`、`packs-index.json`）。当前
 `packs.mojobox.dev/v1alpha1` Pack/Lock/归档链路冻结为 legacy，不作为 MVP 的宿主安装输入，

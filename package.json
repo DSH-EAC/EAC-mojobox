@@ -4,9 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node scripts/validate.mjs && node --test scripts/*.test.mjs",
+    "test": "node scripts/validate.mjs && node scripts/build-catalog.mjs --check && node --test scripts/*.test.mjs",
     "lock:pack": "node scripts/lock-pack.mjs",
     "inspect:pack": "node scripts/inspect-pack.mjs",
+    "inspect:feature-pack": "node scripts/feature-pack.mjs",
+    "build:intake": "node scripts/build-catalog.mjs",
     "host:pack": "node adapters/official-cli.mjs",
     "prepare:site": "node scripts/build-site.mjs",
     "dev": "npm run prepare:site && vite --config vite.config.mjs",

@@ -1,5 +1,9 @@
 # DSH Mojobox
 
+> 当前开发顺序已调整为：先完成 Mojobox 收纳、检验、展示、下载框架，再适配整合包，最后搭载测试。
+> 最新入口为[收录规范](docs/intake.md)和[实施进度](docs/implementation-plan.md)。阶段一已建立独立收录检查；
+> 下文的宿主一键安装目标及 legacy 构建说明保留供历史参考，不作为框架完成前置条件。
+
 Mojobox 是面向 DeepSeek Harness 生态的功能整合包目录与分发仓库。Mojobox 负责目录、来源、
 版本、摘要和市场索引；官方桌面端的 Host 插件负责读取索引并一键安装 Feature Pack。
 
