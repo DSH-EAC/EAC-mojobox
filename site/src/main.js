@@ -1,5 +1,6 @@
 import {
   Archive,
+  ArrowUpRight,
   Box,
   Boxes,
   CheckCircle2,
@@ -10,6 +11,7 @@ import {
   ExternalLink,
   FileJson,
   Filter,
+  Info,
   PackageCheck,
   Search,
   ShieldCheck,
@@ -20,6 +22,7 @@ import './styles.css'
 
 const iconSet = {
   Archive,
+  ArrowUpRight,
   Box,
   Boxes,
   CheckCircle2,
@@ -30,6 +33,7 @@ const iconSet = {
   ExternalLink,
   FileJson,
   Filter,
+  Info,
   PackageCheck,
   Search,
   ShieldCheck,
@@ -118,6 +122,18 @@ function pluginRow(plugin) {
 }
 
 function packRow(pack) {
+  if (pack.format === 'eac-feature-pack-v1') return `
+    <article class="pack-card ${state.selected === pack.metadata.id ? 'is-selected' : ''}">
+      <button class="pack-select" data-select="${escapeHtml(pack.metadata.id)}" aria-pressed="${state.selected === pack.metadata.id}" type="button">
+        <span class="card-topline"><span class="item-mark pack-mark"><i data-lucide="boxes"></i></span><span class="version">v${escapeHtml(pack.metadata.version)}</span></span>
+        <strong class="card-title">${escapeHtml(pack.metadata.name)}</strong>
+        <span class="card-author">${escapeHtml(pack.author)} · ${pack.components.length} 个组件</span>
+        <span class="card-description">${escapeHtml(pack.metadata.description || '开发者未提供功能简介。')}</span>
+        <span class="card-status"><span class="badge badge-parsed">结构已检验</span><span class="badge badge-warning">宿主未测试</span></span>
+        <span class="card-inspect">查看详情 <i data-lucide="arrow-up-right"></i></span>
+      </button>
+      <div class="card-actions"><a href="${assetUrl(pack.archiveUrl)}" download><i data-lucide="download"></i>下载整合包</a>${catalog.demo ? '<span>测试样本</span>' : `<a href="${escapeHtml(safeExternalUrl(pack.source))}" target="_blank" rel="noreferrer">来源 <i data-lucide="external-link"></i></a>`}</div>
+    </article>`
   return `
     <button class="item-row ${state.selected === pack.metadata.id ? 'is-selected' : ''}" data-select="${escapeHtml(pack.metadata.id)}" type="button">
       <span class="item-mark pack-mark"><i data-lucide="boxes"></i></span>
@@ -230,6 +246,11 @@ function intakeDetail(pack) {
     <div class="detail-heading"><span class="detail-mark pack-detail-mark"><i data-lucide="boxes"></i></span>
       <div><span class="eyebrow">FEATURE PACK</span><h2>${escapeHtml(pack.metadata.name)}</h2><p>${escapeHtml(pack.metadata.id)}</p></div></div>
     <p class="detail-description">${escapeHtml(pack.metadata.description)}</p>
+    <div class="trust-strip" aria-label="整合包状态">
+      <span class="trust-item trust-positive"><i data-lucide="package-check"></i><span>结构已检验</span></span>
+      <span class="trust-item"><i data-lucide="external-link"></i><span>来源未解析</span></span>
+      <span class="trust-item trust-warning"><i data-lucide="triangle-alert"></i><span>宿主未测试</span></span>
+    </div>
     <div class="detail-actions action-grid">
       <a class="command primary" href="${assetUrl(pack.archiveUrl)}" download><i data-lucide="archive"></i>下载整合包</a>
       <a class="command" href="${assetUrl(pack.packUrl)}" download><i data-lucide="file-json"></i>清单</a>
@@ -244,7 +265,12 @@ function intakeDetail(pack) {
       <div><dt>来源</dt><dd>${catalog.demo ? '测试来源占位，不是真实发布' : `<a href="${escapeHtml(safeExternalUrl(pack.source))}" target="_blank" rel="noreferrer">开发者发布页面</a>`}</dd></div>
     </dl></section>
     <section class="detail-section"><h3>收录检验</h3>
-      <p>清单结构、归档布局和文件摘要已通过检查。</p>
+      <dl class="check-list">
+        <div><dt>清单与归档结构</dt><dd class="check-pass"><i data-lucide="check-circle-2"></i>已通过</dd></div>
+        <div><dt>文件 SHA-256</dt><dd class="check-pass"><i data-lucide="check-circle-2"></i>已匹配</dd></div>
+        <div><dt>插件来源</dt><dd>未解析</dd></div>
+        <div><dt>宿主运行</dt><dd>未测试</dd></div>
+      </dl>
       <p class="section-note">插件来源尚未解析，宿主运行尚未测试。检查通过不代表安装兼容或安全认证。</p>
     </section>
     <section class="detail-section"><h3>下载校验</h3>
@@ -261,22 +287,25 @@ function renderIntake() {
   state.tab = 'packs'
   const items = filteredItems()
   const selected = catalog.packs.find(pack => pack.metadata.id === state.selected)
-  app.className = 'app'
+  app.className = 'app intake'
   app.innerHTML = `
-    <header class="topbar"><div class="brand"><span class="brand-mark"><span></span><span></span><span></span></span><div><strong>Mojobox</strong><small>整合包目录</small></div></div>
-      <a class="repo-link" href="https://github.com/DSH-EAC/dsh-mojobox" target="_blank" rel="noreferrer">GitHub</a></header>
-    <div class="summary-band"><strong>${catalog.packs.length} <span>整合包</span></strong><span>收纳 · 检验 · 下载</span></div>
+    <header class="topbar"><div class="brand"><span class="brand-mark"><span></span><span></span><span></span></span><div><strong>Mojobox</strong><small>DSH 整合包目录</small></div></div>
+      <nav class="topbar-nav" aria-label="站点导航"><a class="topbar-link" href="https://github.com/DSH-EAC/dsh-mojobox/blob/main/docs/author-pack-request.md" target="_blank" rel="noreferrer">提交规范</a><a class="repo-link" href="https://github.com/DSH-EAC/dsh-mojobox" target="_blank" rel="noreferrer"><i data-lucide="code-2"></i><span>GitHub</span></a></nav></header>
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy"><span class="eyebrow">DSH · 整合包目录</span><h1 id="hero-title">把好用的工具，<br>装进一个盒子。</h1><p>发现、检验并下载 DSH 整合包。开发者维护内容，Mojobox 提供可追溯的原始归档与检验记录。</p><div class="hero-actions"><a class="hero-link" href="https://github.com/DSH-EAC/dsh-mojobox/blob/main/docs/author-pack-request.md" target="_blank" rel="noreferrer">提交你的整合包 <i data-lucide="arrow-up-right"></i></a><span class="hero-note"><i data-lucide="package-check"></i>原始文件，每一份都有摘要</span></div></div>
+      <div class="hero-art" aria-hidden="true"><span class="hero-orbit orbit-one"></span><span class="hero-orbit orbit-two"></span><span class="hero-cube"><i data-lucide="boxes"></i></span></div>
+    </section>
+    <div class="summary-band"><div class="metric"><strong>${catalog.packs.length}</strong><span>${catalog.demo ? '演示样本' : '正式收录'}</span></div><div class="metric"><strong>${catalog.packs.length}</strong><span>结构已检验</span></div><div class="metric"><strong class="metric-text">未开展</strong><span>宿主实测</span></div><span class="summary-note">收纳 · 检验 · 下载</span></div>
     ${catalog.demo ? '<p class="notice warning" role="status">测试演示：以下样本仅验证收录与下载流程，不是真实功能包，请勿用于安装。</p>' : ''}
     <main class="workspace">
-      <aside class="filters" aria-label="目录筛选">
+      <aside class="filters" aria-label="目录筛选"><div class="filter-intro"><span class="eyebrow">EXPLORE</span><strong>探索目录</strong><span>从一组工具开始，找到适合你的整合包。</span></div>
         <label class="search-field"><i data-lucide="search"></i><input type="search" value="${escapeHtml(state.query)}" placeholder="搜索名称、ID 或包说明" aria-label="搜索目录" /></label>
-        <p class="section-note">由开发者维护整合包，Mojobox 提供收录检查和原始文件下载。</p>
       </aside>
-      <section class="directory" aria-label="目录结果"><div class="directory-heading"><div><span class="eyebrow">COLLECTIONS</span><h1>整合包目录</h1></div><span>${items.length} 项</span></div>
-        <div class="item-list">${items.length ? items.map(packRow).join('') : `<div class="no-results"><i data-lucide="boxes"></i><strong>${catalog.packs.length ? '没有匹配项' : '暂无正式收录的整合包'}</strong><span>${catalog.packs.length ? '调整搜索条件' : '开发者提交的归档通过收录检查后将在这里展示'}</span></div>`}</div>
+      <section class="directory" aria-label="目录结果"><div class="directory-heading"><h2>整合包目录</h2><span>${items.length} 项</span></div>
+        <div class="item-list ${items.length ? '' : 'is-empty'}">${items.length ? items.map(packRow).join('') : `<div class="no-results">${catalog.packs.length ? '<i data-lucide="search"></i><strong>没有匹配项</strong><span>调整搜索条件，或清空搜索后查看全部目录。</span>' : '<div class="empty-illustration"><i data-lucide="boxes"></i><span></span></div><strong>暂无正式收录的整合包</strong><span>我们正在等待第一个盒子。开发者提交符合规范的 .dshpack 后，通过收录检查的归档会展示在这里。</span><a class="empty-cta" href="https://github.com/DSH-EAC/dsh-mojobox/blob/main/docs/author-pack-request.md" target="_blank" rel="noreferrer">查看提交规范 <i data-lucide="arrow-up-right"></i></a>'}</div>`}</div>
       </section>
-      <aside class="detail" id="detail" aria-label="目录详情">${selected ? intakeDetail(selected) : `<div class="detail-empty"><i data-lucide="box"></i><h2>${state.selected ? '未找到此整合包' : '整合包详情'}</h2><p>选择整合包查看开发者、检验范围和下载文件。</p></div>`}</aside>
-    </main>`
+      <aside class="detail ${selected ? 'has-selection' : ''}" id="detail" aria-label="目录详情">${selected ? intakeDetail(selected) : `<div class="detail-guide"><span class="eyebrow">从目录到你的工具箱</span><h2>${state.selected ? '未找到此整合包' : '每个盒子，都有来处。'}</h2><p>${state.selected ? '链接对应的包不在当前目录中，请选择其他整合包。' : '选择整合包查看开发者、检验范围和下载文件。'}</p><ol class="guide-steps"><li><span>01</span><div><strong>了解内容</strong><p>查看作者、组件和声明的内核要求。</p></div></li><li><span>02</span><div><strong>核对检验</strong><p>清单、归档布局与摘要经过静态检查。</p></div></li><li><span>03</span><div><strong>下载原始文件</strong><p>安装和运行由目标宿主负责。</p></div></li></ol><div class="guide-note"><i data-lucide="info"></i><p>结构已检验，表示文件符合收录规范。插件来源尚未解析，宿主运行尚未测试。</p></div></div>`}</aside>
+    </main><footer class="site-footer"><span>Mojobox · 为 DSH 生态收纳好工具</span><span>由开发者维护内容 · 安装与运行交给宿主</span></footer>`
   bindEvents()
   refreshIcons()
   if (focusedId) [...document.querySelectorAll('[data-select]')].find(button => button.dataset.select === focusedId)?.focus()
