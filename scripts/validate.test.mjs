@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { appendFile, cp, mkdir, mkdtemp, readFile, rename, rm, writeFile } from 'node:fs/promises'
+import { appendFile, cp, mkdir, mkdtemp, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import test from 'node:test'
@@ -49,7 +49,8 @@ test('historical suite remains valid when current validator bytes change', async
   await appendFile(join(root, 'scripts/validate.mjs'), '\n// Unrelated implementation update.\n')
   const result = run(root)
   assert.equal(result.status, 0, result.stderr)
-  assert.match(result.stdout, /Validated 18 plugins/)
+  const pluginCount = (await readdir(join(root, 'catalog/plugins'))).filter(path => path.endsWith('.json')).length
+  assert.match(result.stdout, new RegExp(`Validated ${pluginCount} plugins`))
 })
 
 test('rejects a tampered historical suite digest', async t => {
