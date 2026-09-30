@@ -1,10 +1,10 @@
 # Mojobox 整合包：文件结构与最小示例
 
-本文说明 Mojobox 首版接收的 **EAC Feature Pack v1 功能整合包**。
+本文说明 Mojobox 首版接收的 **EAC Feature Pack v1 功能或外观整合包**。外观包与皮肤包在目录中统一使用 `appearance` 分类。
 
 ## 1. 整合包是什么文件？
 
-整合包是一个扩展名为 `.dshpack` 的 **ZIP 压缩文件**，用于描述“一组需要一起使用的插件”。
+整合包是一个扩展名为 `.dshpack` 的 **ZIP 压缩文件**，用于描述“一组需要一起使用的插件”，也可以描述一组皮肤插件或主题组件。
 
 包内的清单告诉宿主：这个整合包叫什么、是什么版本、需要哪些插件。安装时，宿主根据清单找到插件并安装。插件代码保存在各自的发布来源中。
 
@@ -52,6 +52,26 @@ org.example.tools-1.0.0.dshpack
 | `license` | 许可证，例如 `"MIT"` |
 | `requires` | 内核兼容声明，例如 `{"dsh": ">=0.1.7-rc.2 <0.1.8.0"}`；按实际情况填写 |
 | `icon` | 包内图标文件名，首版固定为 `"icon.png"` |
+
+外观包的分类和加载器资料写在仓库外的收录记录中，不放入 `.dshpack` 的 `pack.json`：
+
+```json
+{
+  "category": "appearance",
+  "appearance": {
+    "kind": "skin",
+    "loader": {
+      "id": "@dsh-eac/ui-skin-loader",
+      "version": "1.1.0",
+      "source": "https://github.com/DSH-EAC/dsh-ui-skin-loader"
+    },
+    "skinIds": ["maid-atelier"],
+    "conflicts": ["bodyAttr:theme"]
+  }
+}
+```
+
+这些字段用于目录展示和下游读取。Mojobox 不安装、加载、切换或验证皮肤运行兼容性。
 
 作者和许可证可以不写入最小清单，但正式收录时必须另外提供。兼容声明未知时可以省略，省略不表示已经兼容所有版本。
 

@@ -17,11 +17,11 @@
 它们优先于下文历史的一键安装前置要求。新收录事实源为 `catalog/feature-packs/` 和 `artifacts/`，
 检查器为 `scripts/feature-pack.mjs`，收录构建为 `scripts/build-catalog.mjs`。不把 legacy Pack/Lock 规则套在新记录上。
 
-当前主线是“功能整合包目录 + 宿主市场一键安装”。宿主安装格式采用官方桌面已有的
+当前主线是“功能与外观整合包目录 + 宿主市场一键安装”。宿主安装格式采用官方桌面已有的
 Feature Pack v1（`formatVersion: 1`、`pack.json`、`packs-index.json`）。当前
 `packs.mojobox.dev/v1alpha1` Pack/Lock/归档链路冻结为 legacy，不作为 MVP 的宿主安装输入，
-不新增格式桥接。外观包、EAC 专属新协议/UI/bridge/事务和复杂迁移均暂缓，具体以
-`docs/mvp-development.md` 为准。
+不新增格式桥接。外观包与皮肤包统一归为 `appearance` Feature Pack，现按收录规范推进；
+EAC 专属新协议/UI/bridge/事务和复杂迁移仍暂缓，具体以 `docs/mvp-development.md` 为准。
 
 ## 开始前
 

@@ -26,7 +26,7 @@ async function archive(value = manifest, extras = []) {
   return done
 }
 const recordFor = bytes => ({ format: 'eac-feature-pack-v1', id: manifest.id, version: manifest.version,
-  source: 'https://example.org/test-only-release', author: manifest.author, license: manifest.license, sha256: digest(bytes) })
+  category: 'function', source: 'https://example.org/test-only-release', author: manifest.author, license: manifest.license, sha256: digest(bytes) })
 
 test('valid thin archive is checked offline without claiming resolved sources or runtime success', async t => {
   t.mock.method(globalThis, 'fetch', () => { throw new Error('No network allowed') })
@@ -68,9 +68,22 @@ test('unexpected files, duplicate entries, symlinks, missing icons and size limi
 test('intake metadata rejects unsupported formats, unsafe sources and fabricated digests', () => {
   const record = recordFor(Buffer.from('test'))
   for (const mutation of [{ format: 'unknown' }, { source: 'javascript:alert(1)' },
-    { source: 'https://user:secret@example.org/file' }, { sha256: 'fake' }, { id: '../escape' }]) {
+    { source: 'https://user:secret@example.org/file' }, { sha256: 'fake' }, { id: '../escape' },
+    { category: 'full-environment' }, { category: undefined }]) {
     assert.throws(() => validateRecord({ ...record, ...mutation }))
   }
+})
+
+test('appearance intake records preserve loader metadata and reject it for other categories', () => {
+  const record = { ...recordFor(Buffer.from('test')), category: 'appearance', appearance: {
+    kind: 'skin',
+    loader: { id: '@dsh-eac/ui-skin-loader', version: '1.1.0', source: 'https://github.com/DSH-EAC/dsh-ui-skin-loader' },
+    skinIds: ['maid-atelier'], conflicts: ['bodyAttr:theme'], previews: ['https://example.org/preview.png']
+  } }
+  validateRecord(record)
+  assert.throws(() => validateRecord({ ...record, category: 'function' }))
+  assert.throws(() => validateRecord({ ...record, category: 'appearance', appearance: { loader: { id: 'loader', source: 'javascript:bad' } } }))
+  assert.throws(() => validateRecord({ ...record, appearance: { ...record.appearance, loader: { ...record.appearance.loader, source: 'https://user:secret@example.org/loader' } } }))
 })
 
 test('traversal names in ZIP metadata are rejected without extracting files', async () => {
@@ -100,6 +113,15 @@ test('contributed archive is copied byte-for-byte; mismatch fails before replaci
   await assert.rejects(readFile(join(root, 'site/public/generated/catalog.json')), { code: 'ENOENT' })
   const result = await buildCatalog(root)
   assert.equal(result.packs.length, 1)
+  assert.equal(result.packs[0].metadata.category, 'function')
+  await writeFile(recordPath, JSON.stringify({ ...record, category: 'appearance', appearance: {
+    kind: 'skin', loader: { id: '@example/loader', version: '1.0.0', source: 'https://example.org/loader' }, skinIds: ['test-skin']
+  } }))
+  const appearanceCatalog = await buildCatalog(root)
+  assert.equal(appearanceCatalog.packs[0].metadata.category, 'appearance')
+  assert.equal(appearanceCatalog.packs[0].appearance.loader.id, '@example/loader')
+  await writeFile(recordPath, JSON.stringify(record))
+  await buildCatalog(root)
   const downloaded = await readFile(join(root, 'site/public', result.packs[0].archiveUrl))
   assert.deepEqual(downloaded, bytes)
   assert.equal(result.packs[0].archiveDigest, `sha256:${digest(downloaded)}`)

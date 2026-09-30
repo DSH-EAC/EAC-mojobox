@@ -103,7 +103,8 @@ function filteredItems() {
     })
   }
   return catalog.packs.filter(pack => {
-    const matchesQuery = !query || `${pack.metadata.name} ${pack.metadata.id} ${pack.metadata.description}`.toLowerCase().includes(query)
+    const appearanceText = pack.appearance ? JSON.stringify(pack.appearance) : ''
+    const matchesQuery = !query || `${pack.metadata.name} ${pack.metadata.id} ${pack.metadata.description} ${appearanceText}`.toLowerCase().includes(query)
     const matchesCategory = state.category === 'all' || pack.metadata.category === state.category
     return matchesQuery && matchesCategory
   })
@@ -127,9 +128,9 @@ function packRow(pack) {
       <button class="pack-select" data-select="${escapeHtml(pack.metadata.id)}" aria-pressed="${state.selected === pack.metadata.id}" type="button">
         <span class="card-topline"><span class="item-mark pack-mark"><i data-lucide="boxes"></i></span><span class="version">v${escapeHtml(pack.metadata.version)}</span></span>
         <strong class="card-title">${escapeHtml(pack.metadata.name)}</strong>
-        <span class="card-author">${escapeHtml(pack.author)} · ${pack.components.length} 个组件</span>
+        <span class="card-author">${escapeHtml(pack.author)} · ${escapeHtml(categoryLabels[pack.metadata.category] || '未分类')} · ${pack.components.length} 个组件</span>
         <span class="card-description">${escapeHtml(pack.metadata.description || '开发者未提供功能简介。')}</span>
-        <span class="card-status"><span class="badge badge-parsed">结构已检验</span><span class="badge badge-warning">宿主未测试</span></span>
+        <span class="card-status"><span class="badge badge-lock">${escapeHtml(categoryLabels[pack.metadata.category] || '未分类')}</span><span class="badge badge-parsed">结构已检验</span><span class="badge badge-warning">宿主未测试</span></span>
         <span class="card-inspect">查看详情 <i data-lucide="arrow-up-right"></i></span>
       </button>
       <div class="card-actions"><a href="${assetUrl(pack.archiveUrl)}" download><i data-lucide="download"></i>下载整合包</a>${catalog.demo ? '<span>测试样本</span>' : `<a href="${escapeHtml(safeExternalUrl(pack.source))}" target="_blank" rel="noreferrer">来源 <i data-lucide="external-link"></i></a>`}</div>
@@ -242,6 +243,17 @@ function packDetail(pack) {
 }
 
 function intakeDetail(pack) {
+  const appearance = pack.metadata.category === 'appearance' ? pack.appearance || {} : null
+  const loader = appearance?.loader
+  const appearanceSection = appearance ? `
+    <section class="detail-section"><h3>外观包声明</h3><dl class="facts">
+      <div><dt>外观类型</dt><dd>${escapeHtml(appearance.kind || '未声明')}</dd></div>
+      <div><dt>皮肤 ID</dt><dd>${escapeHtml(appearance.skinIds?.join('、') || '未声明')}</dd></div>
+      <div><dt>加载器依赖</dt><dd>${loader ? `${escapeHtml(loader.id)}${loader.version ? ` @ ${escapeHtml(loader.version)}` : ''}` : '未声明'}</dd></div>
+      <div><dt>已知冲突</dt><dd>${escapeHtml(appearance.conflicts?.join('、') || '未声明')}</dd></div>
+      ${loader?.source ? `<div><dt>加载器来源</dt><dd><a href="${escapeHtml(safeExternalUrl(loader.source))}" target="_blank" rel="noreferrer">打开来源</a></dd></div>` : ''}
+      ${appearance.previews?.length ? `<div><dt>预览来源</dt><dd>${appearance.previews.map(url => `<a href="${escapeHtml(safeExternalUrl(url))}" target="_blank" rel="noreferrer">预览</a>`).join('、')}</dd></div>` : ''}
+    </dl>${appearance.notes ? `<p class="section-note">${escapeHtml(appearance.notes)}</p>` : ''}<p class="section-note">加载器安装、发现、加载、切换与运行兼容由下游 loader 或宿主负责。</p></section>` : ''
   return `
     <div class="detail-heading"><span class="detail-mark pack-detail-mark"><i data-lucide="boxes"></i></span>
       <div><span class="eyebrow">FEATURE PACK</span><h2>${escapeHtml(pack.metadata.name)}</h2><p>${escapeHtml(pack.metadata.id)}</p></div></div>
@@ -260,10 +272,11 @@ function intakeDetail(pack) {
       <div><dt>版本</dt><dd>${escapeHtml(pack.metadata.version)}</dd></div>
       <div><dt>开发者</dt><dd>${escapeHtml(pack.author)}</dd></div>
       <div><dt>许可证</dt><dd>${escapeHtml(pack.license)}</dd></div>
+      <div><dt>分类</dt><dd>${escapeHtml(categoryLabels[pack.metadata.category] || '未分类')}</dd></div>
       <div><dt>格式</dt><dd>EAC Feature Pack v1</dd></div>
       <div><dt>内核要求</dt><dd>${escapeHtml(pack.requires?.dsh || '作者未声明')}</dd></div>
       <div><dt>来源</dt><dd>${catalog.demo ? '测试来源占位，不是真实发布' : `<a href="${escapeHtml(safeExternalUrl(pack.source))}" target="_blank" rel="noreferrer">开发者发布页面</a>`}</dd></div>
-    </dl></section>
+    </dl></section>${appearanceSection}
     <section class="detail-section"><h3>收录检验</h3>
       <dl class="check-list">
         <div><dt>清单与归档结构</dt><dd class="check-pass"><i data-lucide="check-circle-2"></i>已通过</dd></div>
@@ -300,6 +313,7 @@ function renderIntake() {
     <main class="workspace">
       <aside class="filters" aria-label="目录筛选"><div class="filter-intro"><span class="eyebrow">EXPLORE</span><strong>探索目录</strong><span>从一组工具开始，找到适合你的整合包。</span></div>
         <label class="search-field"><i data-lucide="search"></i><input type="search" value="${escapeHtml(state.query)}" placeholder="搜索名称、ID 或包说明" aria-label="搜索目录" /></label>
+        <label>包分类<select id="category-filter"><option value="all">全部</option>${Object.entries(categoryLabels).filter(([value]) => catalog.packs.some(pack => pack.metadata.category === value)).map(([value, label]) => `<option value="${value}" ${state.category === value ? 'selected' : ''}>${label}</option>`).join('')}</select></label>
       </aside>
       <section class="directory" aria-label="目录结果"><div class="directory-heading"><h2>整合包目录</h2><span>${items.length} 项</span></div>
         <div class="item-list ${items.length ? '' : 'is-empty'}">${items.length ? items.map(packRow).join('') : `<div class="no-results">${catalog.packs.length ? '<i data-lucide="search"></i><strong>没有匹配项</strong><span>调整搜索条件，或清空搜索后查看全部目录。</span>' : '<div class="empty-illustration"><i data-lucide="boxes"></i><span></span></div><strong>暂无正式收录的整合包</strong><span>我们正在等待第一个盒子。开发者提交符合规范的 .dshpack 后，通过收录检查的归档会展示在这里。</span><a class="empty-cta" href="https://github.com/DSH-EAC/dsh-mojobox/blob/main/docs/author-pack-request.md" target="_blank" rel="noreferrer">查看提交规范 <i data-lucide="arrow-up-right"></i></a>'}</div>`}</div>

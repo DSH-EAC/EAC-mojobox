@@ -4,7 +4,7 @@
 > 以 [收录规范](intake.md) 和 [框架验收](framework-acceptance.md) 为准。
 > 以下 Pack/Lock、组件组合及宿主联动图为历史设计，不是当前默认构建或框架完成条件。
 
-> **当前主线**：Mojobox MVP 只维护功能整合包目录、归档和市场索引；一键安装由官方桌面已有
+> **当前主线**：Mojobox MVP 维护功能与外观整合包目录、归档和市场索引；一键安装由官方桌面已有
 > Host 插件和 Feature Pack CLI 完成。本文中的 Mojobox 自定义 Pack/Lock 与 EAC Adapter
 > 设计保留作 legacy 参考，不作为当前新增功能的默认方案。详见 [MVP 开发文档](mvp-development.md)。
 
@@ -59,12 +59,13 @@ vendored `0.15` Schema；升级时必须审阅差异、更新 vendor、fixtures 
 | Evidence | 精确 subject、Host、suite、revision 下的结果 | 永久兼容或安全认证 |
 | `.dshpack` | 离线运输 Lock 指定的字节 | 自动执行安装 |
 
-Pack 的 `metadata.category` 可选，当前值为 `function`、`appearance`、`workflow`。旧 Pack 不分类仍
-合法；分类只供发现与筛选，EAC 的计划算法继续按 `components` 与 `requires` 工作。
+Legacy Pack 的 `metadata.category` 可选，当前值为 `function`、`appearance`、`workflow`。新
+Feature Pack 收录记录必须显式声明分类；外观记录还可携带 loader、皮肤 ID、冲突和预览来源，
+这些字段只供目录和下游消费，EAC 的计划算法继续按 `components` 与 `requires` 工作。
 
-发布策略单独放在 `distribution.json.packCategories`，当前仅启用 `function`。未分类和外观包
-仍参加源数据校验，但不进入公开目录、Manifest 下载或归档。未来开放外观包只需补齐宿主行为
-与实测，再调整发布范围；不另建一套贡献和构建系统。
+发布策略单独放在 `distribution.json.packCategories`，当前启用 `function` 和 `appearance`。
+外观包与皮肤包统一作为 `appearance` 发布，复用同一套贡献和构建系统；静态公开仍不等于
+宿主安装或运行兼容已经验证。
 
 ### 完整环境协议
 
@@ -108,7 +109,8 @@ Validator 依次检查：
 配额是两回事。
 
 构建器复制下载文件、读取真实 artifact、生成稳定排序与固定 ZIP 时间的 `.dshpack`，最后生成
-网站消费的 `catalog.json`。Catalog 中插件会暴露 `packageMetadata`，Pack 保留 `metadata.category`。
+网站消费的 `catalog.json`。Catalog 中插件会暴露 `packageMetadata`，Feature Pack 保留
+`metadata.category` 和外观包的 `appearance` 声明。
 
 正式构建先校验源数据，再按发布策略选择包及其引用的插件。归档新增实际 `archiveSize` 和
 `archiveDigest`；下载失败或摘要不匹配时构建失败，不发布半成品。

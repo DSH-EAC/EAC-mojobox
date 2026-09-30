@@ -1,8 +1,9 @@
 # 社区皮肤元数据候选
 
 本次贡献保留五组社区皮肤的原始来源资料，并为其中具有 Cordis 插件入口的
-项目提供六条 legacy Plugin Catalog 记录。它们用于来源审阅，不进入当前
-`catalog/feature-packs/` 正式收录或默认网站。当前 MVP 的公开外观包仍然暂缓。
+项目提供六条 legacy Plugin Catalog 记录。它们用于来源审阅，尚未进入
+`catalog/feature-packs/` 正式收录。外观包与皮肤包现已开放，但仍须提供真实薄
+Feature Pack v1 归档后才能进入正式目录。
 
 ## 原始数据
 
@@ -47,7 +48,7 @@ GitHub 发布产物与固定 Git 源码分别记录，不推断二者相同。
 [dsh-ui-skin-loader](https://github.com/DSH-EAC/dsh-ui-skin-loader)。
 当前主线没有对应 loader Catalog 记录，本次不将外部来源描述成已经收录或集成。
 
-待外观包开放后，由开发者提供符合 [收录规范](../../docs/intake.md) 的薄
+皮肤包开放后，由开发者提供符合 [收录规范](../../docs/intake.md) 的薄
 Feature Pack v1 原始归档，再提交收录记录和真实归档摘要。新格式接受 npm、GitHub
 和 builtin 引用，静态收录不要求预先解析这些引用；legacy PackLock 的精确 npm
 限制不适用于它。本次只贡献来源元数据，不组合运行时或生成安装包。
