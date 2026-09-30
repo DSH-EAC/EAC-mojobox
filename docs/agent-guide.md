@@ -1,113 +1,62 @@
 # 使用 coding agent 开发 Mojobox
 
-本指南让个人维护者可以把边界清楚的任务交给团队或 coding agent。所有任务都先读取仓库根目录
-`AGENTS.md`，检查分支与未提交改动，并且不得自行 commit、push、部署或发布。
+先读根目录 `AGENTS.md`、[收录规范](intake.md)及[实施计划](implementation-plan.md)，检查分支和已有改动。当前目标为收纳、检验、展示和下载。整合包适配与宿主搭载是后续任务。
 
-## 通用任务单
-
-```text
-请先完整读取 AGENTS.md，并检查当前分支和工作区。
-
-目标：<一个可验证结果>
-事实输入：<上游仓库、精确 commit、npm 包或现有文件>
-允许修改：<路径>
-必须保持：<协议边界、现有用户修改、摘要或行为>
-完成标准：<命令与可观察结果>
-
-实现前读取相关 Schema、一个合法 fixture、一个非法 fixture和一个生产样本。
-只陈述可核验事实，不编造字段、摘要或兼容结论。完成后报告修改、实际验证、
-未验证项和 Evidence/摘要影响；不要 commit 或 push。
-```
-
-一个任务只负责一个对象或一条调用链。若同时涉及公共 Schema 和 EAC 事务，先拆成协议 PR 与
-Adapter PR，避免团队成员互相覆盖。
-
-## 收录插件
+## 收录任务模板
 
 ```text
-为 <插件> 添加 Mojobox Catalog 记录。
-
-来源：<GitHub URL + commit/tag>
-npm：<精确包名与版本；没有则写未发布>
-
-核对 artifact 内的 package.json、作者 dsh-plugin.json、license 和 repository。
-存在 package.json.dsh 时，将真实字段投影到 x-mojobox-package；不要推断缺失字段。
-作者未发布 dsh-plugin.json 时使用 registry-maintained，不补造权限、facet 或兼容性。
-已发布 artifact 计算真实 SHA-256；未发布记录不得进入 Pack Lock。
-完成后运行 npm test，并报告来源与摘要。
+目标：收录开发者已经提供的 <id>@<version> 整合包。
+输入：开发者来源页面、原始归档、作者及许可证声明。
+允许修改：catalog/feature-packs/、artifacts/ 及直接相关文档。
+核验：实际字节的 SHA-256、归档清单身份、来源、作者和许可证。
+遇到格式不支持时输出具体差异，不静默重打包，不伪造安装证据。
+完成：npm test、npm run build、npm run verify:downloads。
+报告：检查范围、未验证的来源解析和运行兼容。
 ```
 
-## 创建插件型 Pack
+生产记录与测试样本分开：`fixtures/intake/` 不会自动进入正式收录。没有生产样本时允许空目录，用显式演示构建验证框架。
+
+## 适配任务模板
 
 ```text
-为 <用途> 创建一个 <function|appearance|workflow> Pack 和对应 Lock。
-
-组件：
-- <Catalog ID>@<精确版本>，required=<true|false>
-
-只使用 Catalog 中已有且有真实 artifact 的组件。Pack 与 Lock 的 ID、版本和组件集合必须一致；
-Lock 使用精确 npm source，并从真实 Manifest 字节和 tarball 计算 SHA-256。
-不要加入 profile、preset、用户数据或完整环境。完成后运行 npm test 和 npm run build，
-并报告 .dshpack 文件名。
+目标：让指定开发者整合包符合当前收录规范。
+先列出原包与 intake.md 的具体差异，判断是元数据补齐还是需要修改产物。
+任何产物改动都保留原始来源、原始摘要和改动说明；新字节重新计算摘要。
+不要把薄清单检查通过写成插件来源可解析或运行通过。
+不新增 Mojobox 安装器、Profile 管理或静默格式桥接。
 ```
 
-## 签发 Evidence
+## 网站与构建任务
 
-```text
-为 <subject ID>@<version> 签发 <Host> 的 <Evidence level> Evidence。
+网站只消费生成目录，不读取用户环境、不安装插件。运行：
 
-实际测试输入：<Host Descriptor、suite、命令、日志或 CI 链接>
-固定坐标：<artifact、Manifest、Host、suite、协议 revision>
-
-没有真实执行结果时只提交差距报告，不创建 Evidence。fixture 不能当生产证据，Schema 通过不能
-写成 Tested/Observed。新上游 revision 新签记录，不改写历史 Evidence。完成后运行 npm test。
+```bash
+npm test
+npm run build
+npm run verify:downloads
+npm run build:demo
+npm run verify:downloads -- dist-demo --allow-demo
 ```
 
-## 扩展 EAC Adapter
+另做根路径和子路径构建、桌面/窄屏、键盘操作、中文输入、空目录、损坏目录与下载字节检查。构建下载是开发者原始文件；同一输入不会重写归档内容。
 
-```text
-在 EAC 中实现 Mojobox 的 <只读计划|Pack 安装|卸载|恢复> 能力。
+## 事实源与边界
 
-先读取 EAC 的 AGENTS.md 和 deepseek-harness-eac-dev 规范，定位 mojobox.ts、sidecar、bridge、
-内置 Catalog snapshot 与相关测试。公共 Catalog 只传声明；profile 路径、snapshot、journal、
-ownership 和回滚留在 EAC。
+- `catalog/feature-packs/`：当前收录记录。
+- `artifacts/`：开发者原始产物。
+- `schemas/intake.schema.json`：目录记录契约。
+- `vendor/eac/`：固定输入格式，不直接依赖外层宿主仓库。
+- `scripts/feature-pack.mjs`：结构、布局和摘要检查。
+- `scripts/build-catalog.mjs`：生成目录、报告、清单、原样下载。
+- `scripts/verify-downloads.mjs`：独立复核最终发布树。
+- `site/`：网站界面。
+- `catalog/packs/`、Pack/Lock 和旧 adapter：legacy，保持历史测试，不作为当前默认输入。
 
-保持 dsh.client、Cordis、DSH_HOME 和用户已有插件语义。先写能复现目标行为的定向测试，
-再做最小实现；按影响矩阵执行至少 V2，涉及 bridge/壳提升到 V3/V4，安装分发提升到 V5。
-报告自动化结果与仍需虚拟机人工验证的项目。
-```
+目录、下载、报告必须来自相同归档。自动检验不解析插件来源，不签发运行 Evidence。需要真实运行结果时，在隔离环境调用宿主已有能力；不能使用日常 Profile 做试验。
 
-## 修改协议
+## 交付检查
 
-```text
-评估并实现 Mojobox wire contract 变化：<变化>。
+说明实现、实际命令、未验证项和残余风险。检查 `git diff --check` 与工作区，生成物不提交。
+遵守用户对分支、阶段提交及外部操作的授权；用户未授权时不推送、不发布、不部署。
 
-先确认上游是否已有同义字段。列出受影响 Schema、正反 fixtures、Validator、Catalog、Lock、
-Evidence、网站和 Host Adapter。选择最小兼容方案，至少增加一个 valid 和一个 invalid fixture。
-不要在 Validator 中访问网络或执行插件。完成后运行 npm test、npm run build 和 git diff --check，
-说明迁移和回退。
-```
-
-## 修改静态网站
-
-```text
-修改 Mojobox 网站以支持：<用户工作流>。
-
-保持静态、只消费 generated/catalog.json，不读取本机环境、不直接安装。下载与 EAC 深链接分开；
-覆盖 loading、empty、error 和正常状态，并检查桌面、窄屏、键盘焦点和长文本。
-运行 npm test、npm run build、BASE_PATH=/dsh-mojobox/ npm run build，并提供实际检查结果。
-```
-
-## 审查清单
-
-团队 Reviewer 至少确认：
-
-1. diff 只包含任务相关修改，没有覆盖他人的未提交工作；
-2. 上游 URL、commit、版本和字段可追溯；
-3. digest 来自真实字节，Manifest 改动已同步 Lock/Evidence；
-4. 正反 fixture 都实际被 Validator 执行；
-5. Pack 分类只影响组织，没有偷偷加入安装语义；
-6. 旧 TUI Evidence 没被改成当前生态规则；
-7. EAC 私有路径与事务状态没有进入公共 Schema；
-8. 生成目录、缓存、凭据和用户数据没有进入提交；
-9. 验证命令确实运行，未做的真实安装测试明确列出。
+框架验收记录见 [framework-acceptance.md](framework-acceptance.md)。

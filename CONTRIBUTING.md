@@ -4,9 +4,14 @@
 Host Adapter 时再读[架构说明](docs/architecture.md)。使用 coding agent 时先让它读取
 [AGENTS.md](AGENTS.md)。
 
+当前主线为收纳、检验、展示和下载。新收录按[收录规范](docs/intake.md)提交
+`catalog/feature-packs/<id>.json` 与 `artifacts/<id>-<version>.dshpack`，运行 `npm test`、
+`npm run build` 和 `npm run verify:downloads`。不要求先完成宿主安装；运行证据只能来自真实测试。
+以下插件与 Pack/Lock 流程为历史维护参考，不会进入默认网站。不要新增格式桥接或安装逻辑。
+
 ## 1. 开发环境
 
-要求 Node.js 22 或更高版本。
+要求 Node.js 22.12 或更新的受支持版本。
 
 ```bash
 npm ci
@@ -33,12 +38,15 @@ docs: 完善 Host Adapter 接入说明
 6. artifact 存在 `package.json.dsh` 时可投影为 `x-mojobox-package`；没有的字段不推断。
 7. 运行 `npm test`。
 
-Manifest 任意字节变化都会改变 `manifestDigest`。同步更新引用它的 Lock 和 Evidence，不要仅为
-格式统一重排已有 JSON。
+Manifest 任意字节变化都会改变 `manifestDigest`。重新生成引用它的 Lock，不要仅为格式统一
+重排已有 JSON。历史 Evidence 不改写；发布新版本并真实验证后新增记录。
 
 ### Pack 与 Pack Lock
 
-同时维护：
+> 本节描述 legacy Mojobox Pack/Lock。MVP 正式功能包应按 Feature Pack v1 准备归档，并生成
+> 宿主使用的 `packs-index.json`；具体验收见 [MVP 开发文档](docs/mvp-development.md)。
+
+作者维护 Pack，工具生成对应 Lock：
 
 ```text
 catalog/packs/<id>.pack.json
@@ -48,7 +56,22 @@ catalog/packs/<id>.lock.json
 确认 Pack ID/版本、组件集合、组件版本完全对应；Lock 使用精确 npm 来源，并记录真实
 `manifestDigest` 与 `artifactDigest`。插件型 Pack 可选分类为 `function`、`appearance` 或
 `workflow`；分类不改变安装语义。Profile/Preset 和完整环境不得放入 Pack。完成后运行
-`npm test` 和 `npm run build`。
+以下命令：
+
+```bash
+npm run lock:pack -- catalog/packs/<id>.pack.json
+npm test
+npm run build
+```
+
+锁定命令不联网、不升级组件；artifact 摘要由已审阅目录提供，实际下载字节由构建校验。
+构建后可用 `npm run inspect:pack -- <下载文件.dshpack>` 独立检查归档；PR 和发布工作流也会
+检查生成的每个下载包。读取器核对格式、对象引用及摘要，不执行组件。
+文件名必须与 ID 对应，组件不能重复。当前每个稳定 ID 只保存一个版本，不原地替换已经发布
+版本的内容。发布历史由版本发布保留。
+
+`distribution.json` 是公开分发范围的唯一配置，当前仅发布 `function`。外观包资料继续校验，
+不生成公开下载；未分类包也不会默认发布。例子见 [格式说明](docs/pack-format.md)。
 
 ### Evidence
 
@@ -62,6 +85,9 @@ Evidence 必须记录真实执行结果，并绑定：
 
 fixture 只测试协议形状，不计为生产 Evidence。不同宿主必须独立记录 issuer、Host Descriptor
 和适用范围。
+
+在 `evidence-suites.json` 登记实际执行的 suite ID、版本、摘要和固定 commit 源码链接。不能
+通过改写旧记录来让新 validator 通过；该登记表仅固定历史输入，不自动证明测试已经执行。
 
 ### Schema 或 Validator
 

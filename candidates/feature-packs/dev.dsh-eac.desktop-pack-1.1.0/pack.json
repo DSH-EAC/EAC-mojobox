@@ -1,0 +1,21 @@
+{
+  "formatVersion": 1,
+  "id": "dev.dsh-eac.desktop-pack",
+  "name": "DSH EAC Desktop Pack",
+  "version": "1.1.0",
+  "description": "DSH Desktop EAC 功能整合包；通过一个聚合插件包提供 12 个桌面功能。",
+  "author": "DSH-EAC",
+  "license": "MIT",
+  "requires": {
+    "dsh": ">=0.1.7-rc.2 <0.1.8.0"
+  },
+  "plugins": [
+    {
+      "ref": "@dsh-eac/desktop-pack",
+      "version": "1.1.0"
+    }
+  ],
+  "conflicts": [],
+  "overrides": [],
+  "changelog": "首个薄 Feature Pack 描述包：复用现有 npm 聚合包，不重复封装内部成员。"
+}

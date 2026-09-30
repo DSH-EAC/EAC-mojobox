@@ -7,6 +7,21 @@
 
 以最小、可验证的改动维护 Mojobox 的 Catalog、Pack/Lock、Evidence、静态网站与构建链。
 不要把 Mojobox 扩展成插件运行时、宿主安装器或完整环境迁移工具。
+`adapters/official-cli.mjs` 只负责读取计划与调用官方安装接口，不自行实现包管理；真实测试必须
+使用新建隔离 home，不能把用户日常 Profile 当测试目标。
+
+## 当前 MVP 边界
+
+最新用户决策：优先交付收纳、检验、展示与下载框架，然后适配开发者整合包，最后进行宿主搭载测试。
+整合包内容由开发者维护。当前执行规范见 `docs/intake.md` 与 `docs/implementation-plan.md`；
+它们优先于下文历史的一键安装前置要求。新收录事实源为 `catalog/feature-packs/` 和 `artifacts/`，
+检查器为 `scripts/feature-pack.mjs`，收录构建为 `scripts/build-catalog.mjs`。不把 legacy Pack/Lock 规则套在新记录上。
+
+当前主线是“功能整合包目录 + 宿主市场一键安装”。宿主安装格式采用官方桌面已有的
+Feature Pack v1（`formatVersion: 1`、`pack.json`、`packs-index.json`）。当前
+`packs.mojobox.dev/v1alpha1` Pack/Lock/归档链路冻结为 legacy，不作为 MVP 的宿主安装输入，
+不新增格式桥接。外观包、EAC 专属新协议/UI/bridge/事务和复杂迁移均暂缓，具体以
+`docs/mvp-development.md` 为准。
 
 ## 开始前
 
@@ -47,7 +62,14 @@
 
 验证：`npm test`。进入 Pack 时再运行 `npm run build`。
 
-### 添加或更新 Pack
+### 收录开发者整合包（当前主线）
+
+读取 `docs/intake.md`、`schemas/intake.schema.json`、`vendor/eac/` 与 `fixtures/intake/`。
+提交开发者归档和收录记录，不替开发者组合插件。运行 `npm test`、`npm run build`、
+`npm run verify:downloads`。正式目录允许为空；框架测试样本只进入 `dist-demo/`。
+静态检验不声称来源已解析、安装成功或运行安全。
+
+### 添加或更新 legacy Pack（历史维护）
 
 读取：`schemas/pack.schema.json`、`schemas/pack-lock.schema.json`、一对现有 Pack/Lock。
 
@@ -107,7 +129,7 @@
 
 - `manifestDigest` 是 Manifest 文件原始字节的 SHA-256。
 - `artifactDigest` 是精确下载 artifact 原始字节的 SHA-256。
-- 修改 Manifest 格式也会改变 digest，必须更新所有 Lock/Evidence 引用。
+- 修改 Manifest 格式也会改变 digest，必须重新生成 Lock；历史 Evidence 不改写，真实重新验证后新增记录。
 - 不能通过复制旧摘要、猜测摘要或只改字符串完成升级。
 - `evidenceLevel` 与 `result` 是独立事实，高等级 Evidence 也可以失败。
 - Schema 校验成功不等于安全、运行成功或宿主支持。

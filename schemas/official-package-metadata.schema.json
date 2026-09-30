@@ -21,7 +21,15 @@
           "type": "object",
           "additionalProperties": false,
           "required": ["patch"],
-          "properties": { "patch": { "type": "string" } }
+          "properties": {
+            "patch": {
+              "description": "One package-relative patch path, or an ordered list applied in sequence.",
+              "anyOf": [
+                { "type": "string" },
+                { "type": "array", "items": { "type": "string" } }
+              ]
+            }
+          }
         },
         "profile": {
           "type": "object",

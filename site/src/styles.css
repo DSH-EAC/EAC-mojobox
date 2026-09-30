@@ -142,7 +142,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .detail-heading p { margin: 4px 0 0; overflow-wrap: anywhere; color: var(--muted); font-size: .69rem; }
 .detail-description { margin: 17px 0 0; color: var(--muted); font-size: .8rem; line-height: 1.6; }
 .detail-actions { display: flex; gap: 8px; margin-top: 20px; }
-.action-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
+.action-grid { display: grid; grid-template-columns: 1fr 1fr; }
+.action-grid .primary { grid-column: 1 / -1; }
 .command, .icon-command { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); text-decoration: none; font-size: .75rem; font-weight: 700; }
 .command.primary { border-color: var(--green); background: var(--green); color: white; }
 .icon-command { width: 38px; padding: 0; }
@@ -161,8 +162,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .section-note, .notice { display: flex; align-items: flex-start; gap: 7px; margin: 11px 0 0; color: var(--muted); font-size: .7rem; line-height: 1.5; }
 .section-note svg, .notice svg { width: 15px; height: 15px; flex: 0 0 auto; }
 .notice.warning { color: var(--orange); }
+.app > .notice { padding: 12px clamp(18px, 4vw, 56px); margin: 0; background: var(--orange-soft); }
+.facts dt { overflow-wrap: anywhere; }
 .evidence-row { display: grid; grid-template-columns: 22px 1fr; gap: 8px; margin-top: 14px; color: var(--green); }
 .evidence-row svg { width: 18px; height: 18px; }
+.evidence-warning { color: var(--orange); }
 .evidence-row strong { display: block; color: var(--ink); font-size: .73rem; }
 .evidence-row span { display: block; margin-top: 3px; color: var(--muted); font-size: .68rem; }
 .evidence-row span + span { font-family: "Cascadia Code", Consolas, monospace; font-size: .61rem; }
@@ -170,7 +174,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .component-list { margin-top: 10px; }
 .component-list button { width: 100%; min-height: 57px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 9px 0; border: 0; border-bottom: 1px solid var(--line); background: transparent; color: var(--ink); text-align: left; cursor: pointer; }
 .component-list strong { display: block; overflow-wrap: anywhere; font-size: .7rem; }
-.component-list small { display: block; margin-top: 3px; color: var(--muted); font-size: .65rem; }
+.component-list small { display: block; margin-top: 3px; overflow-wrap: anywhere; color: var(--muted); font-size: .65rem; }
 .component-list code { color: var(--muted); font-size: .58rem; }
 .detail-empty { min-height: 55vh; display: grid; place-content: center; justify-items: center; text-align: center; color: var(--muted); }
 .detail-empty > svg { width: 38px; height: 38px; color: #aab3ad; }

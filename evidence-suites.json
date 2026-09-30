@@ -1,0 +1,8 @@
+[
+  {
+    "id": "mojobox-stage0-schema",
+    "version": "0.1.0",
+    "digest": "sha256:d087107e062528eed0d0bfa5f8d2c26b4897e090a1ea60a445a945b195e4428d",
+    "source": "https://github.com/DSH-EAC/dsh-mojobox/blob/d76f5ea78f36ba8c1e862574ea09de02398fffd9/scripts/validate.mjs"
+  }
+]

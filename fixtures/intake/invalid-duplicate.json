@@ -1,0 +1,7 @@
+{
+  "formatVersion": 1,
+  "id": "dev.mojobox.intake-test",
+  "name": "重复引用反例",
+  "version": "1.0.0",
+  "plugins": [{ "ref": "@example/test-only" }, { "ref": "@example/test-only" }]
+}
