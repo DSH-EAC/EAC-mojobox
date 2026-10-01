@@ -8,6 +8,7 @@
     "lock:pack": "node scripts/lock-pack.mjs",
     "inspect:pack": "node scripts/inspect-pack.mjs",
     "inspect:feature-pack": "node scripts/feature-pack.mjs",
+    "check:skin-prompts": "node scripts/skin-prompt-package.mjs",
     "build:intake": "node scripts/build-catalog.mjs",
     "host:pack": "node adapters/official-cli.mjs",
     "prepare:site": "node scripts/build-catalog.mjs",

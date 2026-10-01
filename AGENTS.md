@@ -36,6 +36,7 @@ EAC 专属新协议/UI/bridge/事务和复杂迁移仍暂缓，具体以 `docs/m
 | 内容 | 事实源 |
 | --- | --- |
 | 插件记录 | `catalog/plugins/*.json` |
+| 皮肤 Prompt 资料 | `catalog/skin-prompt-packages/` 与 `schemas/skin-prompt-package.schema.json` |
 | Pack / Lock | `catalog/packs/*.pack.json`、`*.lock.json` |
 | 生产 Evidence | `catalog/evidence/*.json` |
 | Mojobox wire format | `schemas/*.schema.json` |

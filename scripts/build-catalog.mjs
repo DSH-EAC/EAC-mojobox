@@ -2,10 +2,12 @@ import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { inspectFeaturePack, validateRecord } from './feature-pack.mjs'
+import { buildSkinPromptCatalog, collectSkinPromptPackages } from './skin-prompt-package.mjs'
 
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 
 export async function buildCatalog(root = rootDir, { checkOnly = false, demo = false } = {}) {
+  const skinSource = await collectSkinPromptPackages(root)
   const recordsDir = join(root, 'catalog/feature-packs')
   const entries = (await readdir(recordsDir)).filter(name => name.endsWith('.json')).sort()
   const admitted = []
@@ -31,6 +33,7 @@ export async function buildCatalog(root = rootDir, { checkOnly = false, demo = f
   await mkdir(join(output, 'downloads'), { recursive: true })
   await mkdir(join(output, 'reports'), { recursive: true })
   await mkdir(join(output, 'packs'), { recursive: true })
+  const skinCatalog = await buildSkinPromptCatalog(root, output)
   const packs = []
   for (const { record, report, bytes, filename } of admitted) {
     const m = report.manifest
@@ -44,7 +47,7 @@ export async function buildCatalog(root = rootDir, { checkOnly = false, demo = f
       components: m.plugins, appearance: record.appearance, archiveUrl: `generated/downloads/${filename}`, archiveSize: report.size,
       archiveDigest: `sha256:${report.sha256}`, packUrl, reportUrl, checks: report.checks, runtime: report.runtime })
   }
-  const catalog = { apiVersion: 'catalog.mojobox.dev/v1alpha1', mode: 'intake', demo, plugins: [], packs }
+  const catalog = { apiVersion: 'catalog.mojobox.dev/v1alpha1', mode: 'intake', demo, plugins: [], packs, skinPackages: skinCatalog.packages, skinSource: skinSource.source || null }
   await writeFile(join(output, 'catalog.json'), JSON.stringify(catalog, null, 2) + '\n')
   console.log(`Validated and collected ${packs.length} developer archives.`)
   return catalog

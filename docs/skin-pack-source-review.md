@@ -12,8 +12,12 @@
 Mojobox 不实现皮肤加载、切换、渲染、素材管理或运行时回滚；这些职责属于皮肤加载器和宿主。
 
 外观包与皮肤包在 Mojobox 中统一归类为 `appearance`，表示对客户端样式或整体外观的修改。
-`dsh-skin-prompt-packages` 仅是当前来源复核材料；正式内容以后以 Mojobox 自身的
+`dsh-skin-prompt-packages` 是当前皮肤资料的来源事实；运行时皮肤内容以后以 Mojobox 自身的
 `catalog/feature-packs/` 与 `artifacts/` 收录记录为准。
+
+其中的十套 `skin-prompts/packages/` 已按上游 `skin-prompt-package-v1` 原样收纳到
+`catalog/skin-prompt-packages/`，并固定源提交、manifest/prompt/README 摘要。它们是 AI
+设计资料，不是可安装插件；需要宿主或 loader 消费的运行时皮肤仍须另行提供薄 Feature Pack。
 
 ## 上游事实
 

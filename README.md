@@ -13,6 +13,7 @@ Mojobox 把分散在 npm、GitHub Release 和开发者仓库中的插件、功�
 - `function`、`appearance` 和 `workflow` 可以进入收录校验；公开分发范围由 [`distribution.json`](distribution.json) 控制。
 - 皮肤与外观包只收录来源、组件、依赖、冲突和归档信息，不开发桌面端加载器。
 - 正式 `catalog/feature-packs/` 当前为空，演示样本与正式内容完全分离。
+- 已从 `dsh-skin-prompt-packages` 固定提交收录十套 `skin-prompt-package-v1` 皮肤资料；它们用于 AI 设计和复刻，不是可安装插件。
 
 “结构已检验”不等于“宿主已安装”或“运行兼容”。运行证据必须绑定具体宿主、加载器、版本和测试环境。
 
@@ -100,6 +101,8 @@ BASE_PATH=/dsh-mojobox/ npm run build
 - 代码、图片、音频等素材的许可证边界；
 - 已验证的宿主和加载器版本。
 
+皮肤 Prompt 资料包单独收纳 `manifest.json`、`prompt.md` 和 `README.md`，网站会展示其来源提交、许可证、目标界面、主题和文件摘要。Mojobox 不执行 Prompt，也不把这类资料转换成 `.dshpack`。
+
 ## 开发者如何提交整合包？
 
 先阅读[整合包收录规范](docs/intake.md)和[文件结构说明](docs/author-pack-request.md)。开发者需要提供已经完成的薄 Feature Pack，Mojobox 不替作者临时拼装生产包。
@@ -158,6 +161,7 @@ npm run inspect:feature-pack -- artifacts/<id>-<version>.dshpack <sha256>
 npm test
 npm run build
 npm run verify:downloads
+npm run check:skin-prompts
 ```
 
 检查器会验证：
@@ -176,9 +180,11 @@ npm run verify:downloads
 | --- | --- |
 | `catalog/plugins/` | 插件来源、版本和 artifact 事实 |
 | `catalog/feature-packs/` | 当前 Feature Pack 收录记录 |
+| `catalog/skin-prompt-packages/` | 固定来源的皮肤 Prompt 资料包 |
 | `artifacts/` | 开发者提供的原始 `.dshpack` |
 | `candidates/` | 尚未进入正式目录的候选来源资料 |
 | `schemas/` | Mojobox 收录记录契约 |
+| `schemas/skin-prompt-package.schema.json` | 皮肤 Prompt 资料包契约 |
 | `vendor/eac/` | 固定的 Feature Pack 输入 Schema |
 | `fixtures/intake/` | 正反测试样本，不是生产内容 |
 | `scripts/feature-pack.mjs` | 归档检查器 |
