@@ -104,6 +104,14 @@ test('catalog text is escaped rather than rendered as active markup', () => {
 const intakePack = { ...samplePack, format: 'eac-feature-pack-v1', author: 'Test developer', license: 'MIT',
   source: 'https://example.org/release', reportUrl: 'generated/reports/sample.json',
   requires: { dsh: '>=0.1.7' }, components: [{ ref: '@example/test-only', version: '1.0.0' }] }
+const skinPackage = {
+  format: 'dsh-skin-prompt-package-v1',
+  metadata: { id: 'maid-atelier', name: '深海女仆工坊', nameEn: 'Abyssal Maid Atelier', description: 'Prompt 资料', tags: ['maid'], category: 'appearance' },
+  author: 'Small-tailqwq', license: 'CC-BY-NC-SA-4.0', source: { repository: 'https://github.com/example/skins', revision: 'b'.repeat(40) },
+  target: { surface: 'dsh-client-web-ui' }, themes: ['light', 'dark'], requiredPromptSections: ['设计目标'],
+  files: { manifest: `sha256:${'a'.repeat(64)}`, prompt: `sha256:${'b'.repeat(64)}`, readme: `sha256:${'c'.repeat(64)}` },
+  manifestUrl: 'generated/skin-packages/maid-atelier/manifest.json', promptUrl: 'generated/skin-packages/maid-atelier/prompt.md', readmeUrl: 'generated/skin-packages/maid-atelier/README.md', runtime: 'not-applicable', installable: false
+}
 
 test('appearance intake details show declared loader facts without runtime claims', () => {
   const pack = { ...intakePack, metadata: { ...intakePack.metadata, category: 'appearance' }, appearance: {
@@ -118,6 +126,16 @@ test('appearance intake details show declared loader facts without runtime claim
   assert.match(site.app.innerHTML, /宿主未测试/)
   assert.match(site.app.innerHTML, /由下游 loader 或宿主负责/)
   assert.match(site.app.innerHTML, /option value="appearance"/)
+})
+
+test('skin prompt packages render as source material and retain deployment base', () => {
+  const site = loadSite('/dsh-mojobox/', { mode: 'intake', demo: false, plugins: [], packs: [], skinPackages: [skinPackage] })
+  site.run('state.tab = "skins"; state.selected = "maid-atelier"; render()')
+  for (const path of [skinPackage.manifestUrl, skinPackage.promptUrl, skinPackage.readmeUrl]) assert.ok(site.app.innerHTML.includes(`href="/dsh-mojobox/${path}" download`))
+  assert.match(site.app.innerHTML, /不可直接安装/)
+  assert.match(site.app.innerHTML, /SKIN PROMPT PACKAGE/)
+  assert.match(site.app.innerHTML, /来源已固定/)
+  assert.match(site.app.innerHTML, /目标宿主或 loader/)
 })
 
 for (const base of ['/', '/dsh-mojobox/']) {

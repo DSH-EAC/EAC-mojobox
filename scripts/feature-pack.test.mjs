@@ -127,7 +127,7 @@ test('contributed archive is copied byte-for-byte; mismatch fails before replaci
   assert.equal(result.packs[0].archiveDigest, `sha256:${digest(downloaded)}`)
   assert.deepEqual(await buildCatalog(root), result)
   const publicDir = join(root, 'site/public')
-  assert.deepEqual(await verifyDownloads(publicDir), { verified: 1 })
+  assert.deepEqual(await verifyDownloads(publicDir), { verified: 1, skinPackages: 0 })
   const catalogPath = join(publicDir, 'generated/catalog.json')
   const changed = structuredClone(result)
   changed.packs[0].components[0].version = '9.9.9'
@@ -149,7 +149,7 @@ test('contributed archive is copied byte-for-byte; mismatch fails before replaci
   } finally { await new Promise(accept => server.close(accept)) }
   await buildCatalog(root, { demo: true })
   await assert.rejects(verifyDownloads(publicDir), /cannot be published/)
-  assert.deepEqual(await verifyDownloads(publicDir, { allowDemo: true }), { verified: 1 })
+  assert.deepEqual(await verifyDownloads(publicDir, { allowDemo: true }), { verified: 1, skinPackages: 0 })
   await writeFile(join(publicDir, result.packs[0].reportUrl), '{}')
   await assert.rejects(verifyDownloads(publicDir, { allowDemo: true }), /report\/manifest mismatch/)
   await buildCatalog(root)

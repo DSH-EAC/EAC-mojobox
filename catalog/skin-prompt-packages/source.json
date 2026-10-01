@@ -1,0 +1,99 @@
+{
+  "format": "dsh-skin-prompt-source-v1",
+  "repository": "https://github.com/DSH-EAC/dsh-skin-prompt-packages",
+  "revision": "bcb2ecaf318f60df2ff86e5214d646a785ccabc9",
+  "schemaPath": "skin-prompts/schema/manifest.schema.json",
+  "schemaDigest": "sha256:005e0735a71b9b13d9e868892bfde3f82606642676df4f4ad5018f91568efba9",
+  "packages": [
+    {
+      "id": "blue-fantasy",
+      "path": "packages/blue-fantasy",
+      "files": {
+        "manifest": "sha256:bea10b51688968512dab25c90ca40c8969329ad7e16d1ed5f2f5f5bbb6b53c1b",
+        "prompt": "sha256:a5275ad5690b98b887e17bcf4f31dd3e69fa354c5b2da2316c60ddb040583610",
+        "readme": "sha256:b82e1fb917c96a88397fd5a49683a0315714af4aa511e2f554aa3c8cd6f7e857"
+      }
+    },
+    {
+      "id": "dragon-heir",
+      "path": "packages/dragon-heir",
+      "files": {
+        "manifest": "sha256:16a1dac6f6ca3fd00879810e6117843d9a8745776b420b45f715de73f4ac07fa",
+        "prompt": "sha256:3ea5d444c8a2b49300c06f38561caf6f27a2f7712f66be6c355b032b9dd080ee",
+        "readme": "sha256:aaa8801ca14756db5907014877d84a659794a3ef953ee86d5aab9d4ca4790a06"
+      }
+    },
+    {
+      "id": "maid-atelier",
+      "path": "packages/maid-atelier",
+      "files": {
+        "manifest": "sha256:b4d3d6258c95655424d0f448107e093465bf1354280a82066eece2624cca5343",
+        "prompt": "sha256:1adb09dbe10c5d9c99290636017a987dc4dc783b8c10ac76bfd403c58e799e8d",
+        "readme": "sha256:41aeb9d61d245fc860d9e18dff397297b9de52e09a489feb029c599522a15454"
+      }
+    },
+    {
+      "id": "miku",
+      "path": "packages/miku",
+      "files": {
+        "manifest": "sha256:fa14d4284ae4e625387f7a24e443e7e0a4a7e86c3b578cecac844a1d86e920e1",
+        "prompt": "sha256:25a10a324812bff85ea8a583f2d2a9f27d3ca12de8c5b37f7f85c3f6e7a1fb1d",
+        "readme": "sha256:e66d1c0bf6d9afb5e296a199390aabd13ec09b44592804b1a99e721f4581ac39"
+      }
+    },
+    {
+      "id": "minecraft",
+      "path": "packages/minecraft",
+      "files": {
+        "manifest": "sha256:7538395438e09f849ea18a03ca4a6fa005894ef23c3d154ed7b1f52176b5f0e2",
+        "prompt": "sha256:9e205a12a88f569c5bc262f96ab57cdc65c146a06a83e25ca232d35810fbd5a2",
+        "readme": "sha256:89c047f885ea77c80b129c35d9a80a3986a13a895a33735b75074207c46b2b5c"
+      }
+    },
+    {
+      "id": "qq98",
+      "path": "packages/qq98",
+      "files": {
+        "manifest": "sha256:965c9f4418fe9408a7829bbb3813664b0fd54eaeb9d7db68233cb16b29598176",
+        "prompt": "sha256:c9831c6e4a807118fcb9ab5f65f717ecc07218033cc46d49a778d362a275b7f1",
+        "readme": "sha256:9a7beca4d4b8247b3872a01823fe6c3dd8eb219cff06ed03b7d200c6a64dbbb2"
+      }
+    },
+    {
+      "id": "ths",
+      "path": "packages/ths",
+      "files": {
+        "manifest": "sha256:515747e33a35a03927cb45a7ba94c44ec4bd481007d3a5b6097f4033e118cd4e",
+        "prompt": "sha256:1ec6540a0e3dd7776aa23167860a2830d5b1bcdff6cf01b9ee7e834f2bd9fc52",
+        "readme": "sha256:cda3fba32d83f94994c0f09f837b5b3d5ee2f891072d74cc0ad4cbacee25ab80"
+      }
+    },
+    {
+      "id": "trading",
+      "path": "packages/trading",
+      "files": {
+        "manifest": "sha256:e6936c6514dfeb4a5bfbffc788ae16b99609dfd26a6a494c50095a163c8dcd9f",
+        "prompt": "sha256:0d7176e2649aab0c7460cf2e70f8e7f6b19d72e8211405f5c72cd57f6bfc2b01",
+        "readme": "sha256:51b26948a33a6fa5e0065322ae191ed7d8a625687cd5f8f897bf849a0abb52e9"
+      }
+    },
+    {
+      "id": "whale-song",
+      "path": "packages/whale-song",
+      "files": {
+        "manifest": "sha256:e1eae427111cf643931cd9120fb13f097c96df2d785b55ca7b170dd250eedd00",
+        "prompt": "sha256:835111fcb782fad1d7d7b27ac83d864f391f72e4edd3be4f2b5441c539c009ee",
+        "readme": "sha256:6eeecfcaa0cdde7930592f193f2a7974f50528d403afb59c13641488dbec4fe5"
+      }
+    },
+    {
+      "id": "xp",
+      "path": "packages/xp",
+      "files": {
+        "manifest": "sha256:2441596bd60fc2e658f9390847b792093cb07c6f95ee48ecb3bece5b840f0ca3",
+        "prompt": "sha256:f438a163e535339f975151a40fb64d459518c235bf9bbbaabe91f73c0b9f83d0",
+        "readme": "sha256:42dd1ca1ea2b42621508290473460cfd56c22099d4bc92e106af64d3f8d39e5a"
+      }
+    }
+  ]
+}
