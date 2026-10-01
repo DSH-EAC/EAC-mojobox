@@ -78,6 +78,28 @@ function safeExternalUrl(value) {
   }
 }
 
+function renderTags(tags, fallback = '未声明') {
+  const values = [...new Set((Array.isArray(tags) ? tags : []).filter(Boolean))]
+  return values.length ? `<div class="tag-list">${values.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}</div>` : `<p class="empty-inline">${fallback}</p>`
+}
+
+function renderRelatedLinks(links) {
+  const values = (Array.isArray(links) ? links : []).filter(link => link && link.url)
+  return values.length ? `<div class="related-links">${values.map(link => {
+    const url = safeExternalUrl(link.url)
+    return url === '#' ? `<span class="related-link is-unavailable">${escapeHtml(link.label || '相关链接')}<small>链接未声明</small></span>` : `<a class="related-link" href="${escapeHtml(url)}" target="_blank" rel="noreferrer"><span>${escapeHtml(link.label || '相关链接')}</span><i data-lucide="external-link"></i></a>`
+  }).join('')}</div>` : '<p class="empty-inline">未声明相关链接</p>'
+}
+
+function formatPlatforms(requires) {
+  return requires?.platforms?.map(item => `${item.os}${item.arch?.length ? ` / ${item.arch.join(', ')}` : ''}`).join('、') || '未声明（不代表跨平台实测）'
+}
+
+function sourcePackageUrl(pack) {
+  const repository = safeExternalUrl(pack.source?.repository)
+  return repository !== '#' && pack.source?.revision ? `${repository.replace(/\/$/, '')}/tree/${encodeURIComponent(pack.source.revision)}/packages/${encodeURIComponent(pack.metadata.id)}` : repository
+}
+
 function refreshIcons() {
   createIcons({ icons: iconSet, attrs: { 'aria-hidden': 'true', width: 18, height: 18 } })
 }
@@ -264,8 +286,16 @@ function packDetail(pack) {
 }
 
 function intakeDetail(pack) {
+  const metadata = pack.metadata || {}
   const appearance = pack.metadata.category === 'appearance' ? pack.appearance || {} : null
   const loader = appearance?.loader
+  const components = Array.isArray(pack.components) ? pack.components : []
+  const tags = [...(Array.isArray(metadata.tags) ? metadata.tags : []), categoryLabels[metadata.category] || '未分类']
+  const relatedLinks = [
+    pack.authorRepository ? { label: '作者仓库', url: pack.authorRepository } : null,
+    pack.source ? { label: catalog.demo ? '测试来源占位' : '开发者发布页', url: pack.source } : null,
+    ...(Array.isArray(pack.links) ? pack.links : [])
+  ].filter(Boolean)
   const appearanceSection = appearance ? `
     <section class="detail-section"><h3>外观包声明</h3><dl class="facts">
       <div><dt>外观类型</dt><dd>${escapeHtml(appearance.kind || '未声明')}</dd></div>
@@ -277,8 +307,8 @@ function intakeDetail(pack) {
     </dl>${appearance.notes ? `<p class="section-note">${escapeHtml(appearance.notes)}</p>` : ''}<p class="section-note">加载器安装、发现、加载、切换与运行兼容由下游 loader 或宿主负责。</p></section>` : ''
   return `
     <div class="detail-heading"><span class="detail-mark pack-detail-mark"><i data-lucide="boxes"></i></span>
-      <div><span class="eyebrow">FEATURE PACK</span><h2>${escapeHtml(pack.metadata.name)}</h2><p>${escapeHtml(pack.metadata.id)}</p></div></div>
-    <p class="detail-description">${escapeHtml(pack.metadata.description)}</p>
+      <div><span class="eyebrow">FEATURE PACK</span><h2>${escapeHtml(metadata.name)}</h2><p>${escapeHtml(metadata.id)}</p></div></div>
+    <p class="detail-description">${escapeHtml(metadata.description || '开发者未提供功能简介。')}</p>
     <div class="trust-strip" aria-label="整合包状态">
       <span class="trust-item trust-positive"><i data-lucide="package-check"></i><span>结构已检验</span></span>
       <span class="trust-item"><i data-lucide="external-link"></i><span>来源未解析</span></span>
@@ -289,11 +319,23 @@ function intakeDetail(pack) {
       <a class="command" href="${assetUrl(pack.packUrl)}" download><i data-lucide="file-json"></i>清单</a>
       <a class="command" href="${assetUrl(pack.reportUrl)}" download><i data-lucide="package-check"></i>检验报告</a>
     </div>
+    <section class="detail-section detail-introduction"><h3>整合包介绍</h3><p class="detail-copy">${escapeHtml(metadata.introduction || metadata.description || '开发者未提供更详细的整合包介绍。')}</p></section>
+    <section class="detail-section"><div class="section-title"><h3>包含内容</h3><span class="section-count">${components.length} 项</span></div>
+      <div class="included-list">${components.length ? components.map(component => `<div class="included-item"><span><strong>${escapeHtml(component.ref || component.id || '未命名组件')}</strong><small>${escapeHtml(component.version || '未指定版本')}${component.required === false ? ' · 可选' : ' · 必需'}</small></span></div>`).join('') : '<p class="empty-inline">开发者未声明包含内容</p>'}</div>
+    </section>
+    <section class="detail-section"><h3>标签</h3>${renderTags(tags)}</section>
+    <section class="detail-section"><h3>版本适配</h3><dl class="facts">
+      <div><dt>整合包版本</dt><dd>${escapeHtml(metadata.version || '未声明')}</dd></div>
+      <div><dt>DSH / 内核</dt><dd>${escapeHtml(pack.requires?.dsh || '作者未声明')}</dd></div>
+      <div><dt>平台</dt><dd>${escapeHtml(formatPlatforms(pack.requires))}</dd></div>
+      <div><dt>宿主能力</dt><dd>${escapeHtml(pack.requires?.hostCapabilities?.join('、') || '无额外要求')}</dd></div>
+    </dl><p class="section-note">以上是包作者声明的适配范围，不代表宿主已完成运行验收。</p></section>
+    <section class="detail-section"><h3>相关链接</h3>${renderRelatedLinks(relatedLinks)}</section>
     <section class="detail-section"><h3>发布信息</h3><dl class="facts">
-      <div><dt>版本</dt><dd>${escapeHtml(pack.metadata.version)}</dd></div>
+      <div><dt>版本</dt><dd>${escapeHtml(metadata.version)}</dd></div>
       <div><dt>开发者</dt><dd>${escapeHtml(pack.author)}</dd></div>
       <div><dt>许可证</dt><dd>${escapeHtml(pack.license)}</dd></div>
-      <div><dt>分类</dt><dd>${escapeHtml(categoryLabels[pack.metadata.category] || '未分类')}</dd></div>
+      <div><dt>分类</dt><dd>${escapeHtml(categoryLabels[metadata.category] || '未分类')}</dd></div>
       <div><dt>格式</dt><dd>EAC Feature Pack v1</dd></div>
       <div><dt>内核要求</dt><dd>${escapeHtml(pack.requires?.dsh || '作者未声明')}</dd></div>
       <div><dt>来源</dt><dd>${catalog.demo ? '测试来源占位，不是真实发布' : `<a href="${escapeHtml(safeExternalUrl(pack.source))}" target="_blank" rel="noreferrer">开发者发布页面</a>`}</dd></div>
@@ -311,13 +353,21 @@ function intakeDetail(pack) {
       <p>${pack.archiveSize.toLocaleString('zh-CN')} 字节 · 开发者归档原始字节</p>
       <div class="digest-line"><code>${escapeHtml(pack.archiveDigest)}</code><button class="copy-button" data-copy="${escapeHtml(pack.archiveDigest.slice(7))}" type="button" title="复制 SHA-256" aria-label="复制 SHA-256"><i data-lucide="clipboard"></i></button></div>
     </section>
-    <section class="detail-section"><h3>声明的组件</h3><dl class="facts">
-      ${pack.components.map(component => `<div><dt>${escapeHtml(component.ref)}</dt><dd>${escapeHtml(component.version || '未指定版本')}</dd></div>`).join('')}
-    </dl><p class="section-note">版本及兼容条件由开发者声明，Mojobox 不安装或执行组件。</p></section>`
+    <p class="section-note">版本及兼容条件由开发者声明，Mojobox 不安装或执行组件。</p>`
 }
 
 function skinDetail(pack) {
-  const sourceUrl = safeExternalUrl(pack.source.repository)
+  const sourceUrl = safeExternalUrl(pack.source?.repository)
+  const packageUrl = sourcePackageUrl(pack)
+  const tags = Array.isArray(pack.metadata.tags) ? pack.metadata.tags : []
+  const promptSections = Array.isArray(pack.requiredPromptSections) ? pack.requiredPromptSections : []
+  const implementationFiles = pack.references?.implementation || []
+  const relatedLinks = [
+    pack.authorRepository ? { label: '作者仓库', url: pack.authorRepository } : null,
+    packageUrl !== '#' ? { label: '皮肤资料包仓库', url: packageUrl } : null,
+    sourceUrl !== '#' ? { label: '来源仓库', url: sourceUrl } : null,
+    ...(Array.isArray(pack.links) ? pack.links : [])
+  ].filter(Boolean)
   return `
     <div class="detail-heading"><span class="detail-mark pack-detail-mark"><i data-lucide="file-json"></i></span>
       <div><span class="eyebrow">SKIN PROMPT PACKAGE</span><h2>${escapeHtml(pack.metadata.name)}</h2><p>${escapeHtml(pack.metadata.id)}</p></div></div>
@@ -333,18 +383,31 @@ function skinDetail(pack) {
       <a class="command" href="${assetUrl(pack.readmeUrl)}" download><i data-lucide="file-text"></i>说明</a>
     </div>
     <p class="notice">这是可供 AI 阅读、复刻和继续设计的皮肤资料包，不是可安装插件。Mojobox 不执行 Prompt；安装、加载、切换和运行兼容由目标宿主或 loader 负责。</p>
+    <section class="detail-section detail-introduction"><h3>皮肤包介绍</h3><p class="detail-copy">${escapeHtml(pack.metadata.introduction || pack.metadata.description || '作者未提供更详细的皮肤包介绍。')}</p></section>
+    <section class="detail-section"><h3>标签</h3>${renderTags(tags)}</section>
+    <section class="detail-section"><h3>版本适配</h3><dl class="facts">
+      <div><dt>目标界面</dt><dd>${escapeHtml(pack.target?.surface || '未声明')}</dd></div>
+      <div><dt>目标版本</dt><dd>${escapeHtml(pack.target?.version || pack.target?.dsh || '未声明')}</dd></div>
+      <div><dt>主题</dt><dd>${escapeHtml(pack.themes?.join('、') || '未声明')}</dd></div>
+      <div><dt>保留行为</dt><dd>${pack.target?.preserveBehavior === true ? '是' : '未声明'}</dd></div>
+    </dl><p class="section-note">皮肤资料只声明目标界面和主题范围，不代表 loader 或宿主已经完成兼容测试。</p></section>
+    <section class="detail-section"><div class="section-title"><h3>包含内容</h3><span class="section-count">3 个文件</span></div><dl class="facts">
+      <div><dt>manifest.json</dt><dd>皮肤资料清单</dd></div>
+      <div><dt>prompt.md</dt><dd>设计与复刻说明</dd></div>
+      <div><dt>README.md</dt><dd>收录说明</dd></div>
+      ${implementationFiles.length ? `<div><dt>引用文件</dt><dd>${implementationFiles.map(file => `<code>${escapeHtml(file)}</code>`).join('<br>')}</dd></div>` : ''}
+    </dl></section>
     <section class="detail-section"><h3>来源信息</h3><dl class="facts">
       <div><dt>作者</dt><dd>${escapeHtml(pack.author)}</dd></div>
       <div><dt>许可证</dt><dd>${escapeHtml(pack.license)}</dd></div>
-      <div><dt>来源提交</dt><dd class="mono">${escapeHtml(pack.source.revision)}</dd></div>
-      <div><dt>来源仓库</dt><dd><a href="${escapeHtml(sourceUrl)}" target="_blank" rel="noreferrer">打开 GitHub</a></dd></div>
-      <div><dt>目标界面</dt><dd>${escapeHtml(pack.target.surface)}</dd></div>
-      <div><dt>主题</dt><dd>${escapeHtml(pack.themes.join('、'))}</dd></div>
+      <div><dt>来源提交</dt><dd class="mono">${escapeHtml(pack.source?.revision || '未声明')}</dd></div>
+      <div><dt>来源仓库</dt><dd>${sourceUrl !== '#' ? `<a href="${escapeHtml(sourceUrl)}" target="_blank" rel="noreferrer">打开 GitHub</a>` : '未声明'}</dd></div>
+      <div><dt>引用来源</dt><dd>${escapeHtml(pack.sources?.map(source => `${source.project}: ${source.repositoryPath}`).join('；') || '未声明')}</dd></div>
     </dl></section>
-    <section class="detail-section"><h3>皮肤标签</h3><p class="section-note">${escapeHtml(pack.metadata.tags.join(' · ') || '未声明')}</p></section>
-    <section class="detail-section"><h3>Prompt 章节</h3><dl class="facts">
-      ${pack.requiredPromptSections.map(section => `<div><dt>${escapeHtml(section)}</dt><dd>已收录</dd></div>`).join('')}
-    </dl></section>
+    <section class="detail-section"><h3>相关链接</h3>${renderRelatedLinks(relatedLinks)}</section>
+    <details class="detail-section prompt-accordion"><summary><span><strong>Prompt 章节</strong><small>默认折叠，展开查看 ${promptSections.length} 个章节</small></span><span class="section-count">${promptSections.length} 项</span></summary><dl class="facts">
+      ${promptSections.map(section => `<div><dt>${escapeHtml(section)}</dt><dd>已收录</dd></div>`).join('')}
+    </dl></details>
     <section class="detail-section"><h3>文件摘要</h3><dl class="facts">
       <div><dt>manifest.json</dt><dd class="mono">${escapeHtml(pack.files.manifest)}</dd></div>
       <div><dt>prompt.md</dt><dd class="mono">${escapeHtml(pack.files.prompt)}</dd></div>
