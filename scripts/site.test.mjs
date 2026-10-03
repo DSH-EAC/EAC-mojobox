@@ -198,6 +198,35 @@ test('skin prompt packages render as source material and retain deployment base'
   assert.match(site.app.innerHTML, /目标宿主或 loader/)
 })
 
+test('detail summaries place downloads, declared support, tags and original sources before contents', () => {
+  const site = loadSite('/EAC-mojobox/', mixedIntake)
+  const html = site.run('intakeDetail(catalog.packs[0])')
+  const contents = html.indexOf('class="detail-columns"')
+  for (const marker of ['下载整合包', '声明支持版本', 'tag-list', '本包发布来源']) assert.ok(html.indexOf(marker) < contents)
+  assert.equal(html.split(intakePack.metadata.description).length - 1, 1)
+  const skin = site.run('intakeDetail(catalog.packs[1])')
+  assert.ok(skin.indexOf('aria-label="皮肤预览"') < skin.indexOf('class="detail-columns"'))
+  assert.match(skin, /<img src="https:\/\/example.org\/preview.png"/)
+  assert.match(skin, /宿主未测试/)
+})
+
+test('prompt details distinguish original projects from fixed prompt provenance and reject unsafe previews', () => {
+  const data = structuredClone(mixedIntake)
+  data.skinPackages[0].origin = {
+    repository: 'https://github.com/Small-tailqwq/dsh-deep-whale', projectUrl: 'https://github.com/Small-tailqwq/dsh-deep-whale',
+    previews: [{ url: 'https://example.org/light.webp', label: '浅色' }, { url: 'javascript:alert(1)', label: 'unsafe' }], notes: '上游预览'
+  }
+  const site = loadSite('/EAC-mojobox/', data)
+  const html = site.run('skinDetail(catalog.skinPackages[0])')
+  assert.match(html, /Small-tailqwq\/dsh-deep-whale/)
+  assert.match(html, /skin-prompts\/packages\/maid-atelier/)
+  assert.match(html, /Prompt 资料来源/)
+  assert.ok(html.indexOf('原项目') < html.indexOf('资料溯源'))
+  assert.ok(html.indexOf('<img') < html.indexOf('class="detail-columns"'))
+  assert.doesNotMatch(html, /javascript:|src="\/EAC-mojobox\/\.\.\//)
+  assert.match(html, /不可直接安装/)
+})
+
 for (const base of ['/', '/dsh-mojobox/']) {
   test(`intake catalog renders downloads and truthful check scope at ${base}`, () => {
     const site = loadSite(base, { mode: 'intake', demo: true, plugins: [], packs: [intakePack] })

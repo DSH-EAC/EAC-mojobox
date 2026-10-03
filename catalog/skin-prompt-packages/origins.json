@@ -1,0 +1,171 @@
+{
+  "blue-fantasy": {
+    "repository": "https://github.com/zhu1090093659/dsh-skins",
+    "projectUrl": "https://github.com/zhu1090093659/dsh-skins/tree/540acca50403cadeaf1a902d29bb1540011b5e73/skins/blue-fantasy",
+    "previews": [
+      {
+        "label": "浅色",
+        "url": "https://raw.githubusercontent.com/zhu1090093659/dsh-skins/540acca50403cadeaf1a902d29bb1540011b5e73/skins/blue-fantasy/preview/light.jpg"
+      },
+      {
+        "label": "深色",
+        "url": "https://raw.githubusercontent.com/zhu1090093659/dsh-skins/540acca50403cadeaf1a902d29bb1540011b5e73/skins/blue-fantasy/preview/dark.jpg"
+      }
+    ],
+    "notes": "原项目迁至 dsh-skins；这里展示固定提交的上游新版预览，可能与收录的历史 Prompt 不同。",
+    "evidence": [
+      "https://github.com/zhu1090093659/dsh-web-ui/blob/aedff8f0d9edca0fb341d5bd06e88db084ad358a/.gitmodules",
+      "https://github.com/zhu1090093659/dsh-skins/blob/540acca50403cadeaf1a902d29bb1540011b5e73/skins/blue-fantasy/skin.json"
+    ]
+  },
+  "dragon-heir": {
+    "repository": "https://github.com/zhu1090093659/dsh-skins",
+    "projectUrl": "https://github.com/zhu1090093659/dsh-skins/tree/540acca50403cadeaf1a902d29bb1540011b5e73/skins/dragon-heir",
+    "previews": [
+      {
+        "label": "浅色",
+        "url": "https://raw.githubusercontent.com/zhu1090093659/dsh-skins/540acca50403cadeaf1a902d29bb1540011b5e73/skins/dragon-heir/preview/light.jpg"
+      },
+      {
+        "label": "深色",
+        "url": "https://raw.githubusercontent.com/zhu1090093659/dsh-skins/540acca50403cadeaf1a902d29bb1540011b5e73/skins/dragon-heir/preview/dark.jpg"
+      }
+    ],
+    "notes": "原项目迁至 dsh-skins；这里展示固定提交的上游新版预览，可能与收录的历史 Prompt 不同。",
+    "evidence": [
+      "https://github.com/zhu1090093659/dsh-web-ui/blob/aedff8f0d9edca0fb341d5bd06e88db084ad358a/.gitmodules",
+      "https://github.com/zhu1090093659/dsh-skins/blob/540acca50403cadeaf1a902d29bb1540011b5e73/skins/dragon-heir/skin.json"
+    ]
+  },
+  "maid-atelier": {
+    "repository": "https://github.com/Small-tailqwq/dsh-deep-whale",
+    "projectUrl": "https://github.com/Small-tailqwq/dsh-deep-whale/tree/42ecc2a587c4276e6b65a01933505a42d7f31584/maid-atelier",
+    "previews": [
+      {
+        "label": "浅色",
+        "url": "https://raw.githubusercontent.com/Small-tailqwq/dsh-deep-whale/42ecc2a587c4276e6b65a01933505a42d7f31584/maid-atelier/preview/light.webp"
+      },
+      {
+        "label": "深色",
+        "url": "https://raw.githubusercontent.com/Small-tailqwq/dsh-deep-whale/42ecc2a587c4276e6b65a01933505a42d7f31584/maid-atelier/preview/dark.webp"
+      }
+    ],
+    "notes": "原作者项目预览；Prompt 引用的是 EAC/AIO 适配版本，两者不等同。",
+    "evidence": [
+      "https://github.com/DSH-EAC/dsh-skin-prompt-packages/blob/bcb2ecaf318f60df2ff86e5214d646a785ccabc9/skin-prompts/community-metadata.json"
+    ]
+  },
+  "miku": {
+    "repository": "https://github.com/zhu1090093659/dsh-skins",
+    "projectUrl": "https://github.com/zhu1090093659/dsh-skins/tree/540acca50403cadeaf1a902d29bb1540011b5e73/skins/miku",
+    "previews": [
+      {
+        "label": "浅色",
+        "url": "https://raw.githubusercontent.com/zhu1090093659/dsh-skins/540acca50403cadeaf1a902d29bb1540011b5e73/skins/miku/preview/light.jpg"
+      },
+      {
+        "label": "深色",
+        "url": "https://raw.githubusercontent.com/zhu1090093659/dsh-skins/540acca50403cadeaf1a902d29bb1540011b5e73/skins/miku/preview/dark.jpg"
+      }
+    ],
+    "notes": "原项目迁至 dsh-skins；这里展示固定提交的上游新版预览，可能与收录的历史 Prompt 不同。",
+    "evidence": [
+      "https://github.com/zhu1090093659/dsh-web-ui/blob/aedff8f0d9edca0fb341d5bd06e88db084ad358a/.gitmodules",
+      "https://github.com/zhu1090093659/dsh-skins/blob/540acca50403cadeaf1a902d29bb1540011b5e73/skins/miku/skin.json"
+    ]
+  },
+  "minecraft": {
+    "repository": "https://github.com/zhu1090093659/dsh-skins",
+    "projectUrl": "https://github.com/zhu1090093659/dsh-skins/tree/540acca50403cadeaf1a902d29bb1540011b5e73/skins/minecraft",
+    "previews": [
+      {
+        "label": "浅色",
+        "url": "https://raw.githubusercontent.com/zhu1090093659/dsh-skins/540acca50403cadeaf1a902d29bb1540011b5e73/skins/minecraft/preview/light.jpg"
+      },
+      {
+        "label": "深色",
+        "url": "https://raw.githubusercontent.com/zhu1090093659/dsh-skins/540acca50403cadeaf1a902d29bb1540011b5e73/skins/minecraft/preview/dark.jpg"
+      }
+    ],
+    "notes": "原项目迁至 dsh-skins；这里展示固定提交的上游新版预览，可能与收录的历史 Prompt 不同。",
+    "evidence": [
+      "https://github.com/zhu1090093659/dsh-web-ui/blob/aedff8f0d9edca0fb341d5bd06e88db084ad358a/.gitmodules",
+      "https://github.com/zhu1090093659/dsh-skins/blob/540acca50403cadeaf1a902d29bb1540011b5e73/skins/minecraft/skin.json"
+    ]
+  },
+  "qq98": {
+    "repository": "https://github.com/zhu1090093659/dsh-web-ui",
+    "projectUrl": "https://www.npmjs.com/package/@linxin666/dsh-client-ui-skin-qq98",
+    "previews": [],
+    "notes": "原项目已停用此皮肤，保留历史设计资料；未核实可用的原项目预览。",
+    "evidence": [
+      "https://registry.npmjs.org/@linxin666/dsh-client-ui-skin-qq98/0.1.20"
+    ]
+  },
+  "ths": {
+    "repository": "https://github.com/zhu1090093659/dsh-web-ui",
+    "projectUrl": "https://www.npmjs.com/package/@linxin666/dsh-client-ui-skin-ths",
+    "previews": [],
+    "notes": "原项目已停用此皮肤，保留历史设计资料；未核实可用的原项目预览。",
+    "evidence": [
+      "https://registry.npmjs.org/@linxin666/dsh-client-ui-skin-ths/0.1.20"
+    ]
+  },
+  "trading": {
+    "repository": "https://github.com/zhu1090093659/dsh-skins",
+    "projectUrl": "https://github.com/zhu1090093659/dsh-skins/tree/540acca50403cadeaf1a902d29bb1540011b5e73/skins/trading",
+    "previews": [
+      {
+        "label": "浅色",
+        "url": "https://raw.githubusercontent.com/zhu1090093659/dsh-skins/540acca50403cadeaf1a902d29bb1540011b5e73/skins/trading/preview/light.jpg"
+      },
+      {
+        "label": "深色",
+        "url": "https://raw.githubusercontent.com/zhu1090093659/dsh-skins/540acca50403cadeaf1a902d29bb1540011b5e73/skins/trading/preview/dark.jpg"
+      }
+    ],
+    "notes": "原项目迁至 dsh-skins；这里展示固定提交的上游新版预览，可能与收录的历史 Prompt 不同。",
+    "evidence": [
+      "https://github.com/zhu1090093659/dsh-web-ui/blob/aedff8f0d9edca0fb341d5bd06e88db084ad358a/.gitmodules",
+      "https://github.com/zhu1090093659/dsh-skins/blob/540acca50403cadeaf1a902d29bb1540011b5e73/skins/trading/skin.json"
+    ]
+  },
+  "whale-song": {
+    "repository": "https://github.com/zhu1090093659/dsh-skins",
+    "projectUrl": "https://github.com/zhu1090093659/dsh-skins/tree/540acca50403cadeaf1a902d29bb1540011b5e73/skins/whale-song",
+    "previews": [
+      {
+        "label": "浅色",
+        "url": "https://raw.githubusercontent.com/zhu1090093659/dsh-skins/540acca50403cadeaf1a902d29bb1540011b5e73/skins/whale-song/preview/light.jpg"
+      },
+      {
+        "label": "深色",
+        "url": "https://raw.githubusercontent.com/zhu1090093659/dsh-skins/540acca50403cadeaf1a902d29bb1540011b5e73/skins/whale-song/preview/dark.jpg"
+      }
+    ],
+    "notes": "原项目迁至 dsh-skins；这里展示固定提交的上游新版预览，可能与收录的历史 Prompt 不同。",
+    "evidence": [
+      "https://github.com/zhu1090093659/dsh-web-ui/blob/aedff8f0d9edca0fb341d5bd06e88db084ad358a/.gitmodules",
+      "https://github.com/zhu1090093659/dsh-skins/blob/540acca50403cadeaf1a902d29bb1540011b5e73/skins/whale-song/skin.json"
+    ]
+  },
+  "xp": {
+    "repository": "https://github.com/zhu1090093659/dsh-skins",
+    "projectUrl": "https://github.com/zhu1090093659/dsh-skins/tree/540acca50403cadeaf1a902d29bb1540011b5e73/skins/xp",
+    "previews": [
+      {
+        "label": "浅色",
+        "url": "https://raw.githubusercontent.com/zhu1090093659/dsh-skins/540acca50403cadeaf1a902d29bb1540011b5e73/skins/xp/preview/light.jpg"
+      },
+      {
+        "label": "深色",
+        "url": "https://raw.githubusercontent.com/zhu1090093659/dsh-skins/540acca50403cadeaf1a902d29bb1540011b5e73/skins/xp/preview/dark.jpg"
+      }
+    ],
+    "notes": "原项目迁至 dsh-skins；这里展示固定提交的上游新版预览，可能与收录的历史 Prompt 不同。",
+    "evidence": [
+      "https://github.com/zhu1090093659/dsh-web-ui/blob/aedff8f0d9edca0fb341d5bd06e88db084ad358a/.gitmodules",
+      "https://github.com/zhu1090093659/dsh-skins/blob/540acca50403cadeaf1a902d29bb1540011b5e73/skins/xp/skin.json"
+    ]
+  }
+}

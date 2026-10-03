@@ -97,7 +97,21 @@ function formatPlatforms(requires) {
 
 function sourcePackageUrl(pack) {
   const repository = safeExternalUrl(pack.source?.repository)
-  return repository !== '#' && pack.source?.revision ? `${repository.replace(/\/$/, '')}/tree/${encodeURIComponent(pack.source.revision)}/packages/${encodeURIComponent(pack.metadata.id)}` : repository
+  return repository !== '#' && pack.source?.revision ? `${repository.replace(/\/$/, '')}/tree/${encodeURIComponent(pack.source.revision)}/skin-prompts/packages/${encodeURIComponent(pack.metadata.id)}` : repository
+}
+
+function renderPreviews(previews, name, note = '') {
+  const images = (Array.isArray(previews) ? previews : []).map((preview, index) => ({
+    url: safeExternalUrl(typeof preview === 'string' ? preview : preview.url),
+    label: typeof preview === 'string' ? `预览 ${index + 1}` : preview.label || `预览 ${index + 1}`
+  })).filter(preview => preview.url !== '#')
+  return `<section class="detail-preview-section" aria-label="皮肤预览"><h3>皮肤预览</h3>${note ? `<p class="section-note">${escapeHtml(note)}</p>` : ''}${images.length ? `<div class="detail-previews">${images.map((preview, index) => `<figure><a href="${escapeHtml(preview.url)}" target="_blank" rel="noreferrer"><img src="${escapeHtml(preview.url)}" alt="${escapeHtml(name)} · ${escapeHtml(preview.label)}" ${index ? 'loading="lazy"' : 'loading="eager"'} decoding="async" referrerpolicy="no-referrer" /></a><figcaption>${escapeHtml(preview.label)} <a href="${escapeHtml(preview.url)}" target="_blank" rel="noreferrer">查看原图 <i data-lucide="external-link"></i></a></figcaption></figure>`).join('')}</div>` : '<p class="empty-inline">暂无已核实的预览图片</p>'}</section>`
+}
+
+function componentSourceUrl(ref) {
+  if (ref?.startsWith('github:')) return safeExternalUrl(`https://github.com/${ref.slice(7)}`)
+  if (!ref || ref.startsWith('builtin:')) return '#'
+  return `https://www.npmjs.com/package/${ref.split('/').map(encodeURIComponent).join('/')}`
 }
 
 function refreshIcons() {
@@ -300,10 +314,11 @@ function intakeDetail(pack) {
   const appearance = pack.metadata.category === 'appearance' ? pack.appearance || {} : null
   const loader = appearance?.loader
   const components = Array.isArray(pack.components) ? pack.components : []
-  const tags = [...(Array.isArray(metadata.tags) ? metadata.tags : []), categoryLabels[metadata.category] || '未分类']
+  const tags = [...(Array.isArray(metadata.tags) ? metadata.tags : components.map(component => (component.ref || component.id || '').split('/').pop().replace(/^dsh-/, ''))), categoryLabels[metadata.category] || '未分类']
   const relatedLinks = [
+    loader?.source ? { label: '加载器来源', url: loader.source } : null,
     pack.authorRepository ? { label: '作者仓库', url: pack.authorRepository } : null,
-    pack.source ? { label: catalog.demo ? '测试来源占位' : '开发者发布页', url: pack.source } : null,
+    pack.source ? { label: catalog.demo ? '测试来源占位' : '本包发布来源', url: pack.source } : null,
     ...(Array.isArray(pack.links) ? pack.links : [])
   ].filter(Boolean)
   const appearanceSection = appearance ? `
@@ -313,44 +328,41 @@ function intakeDetail(pack) {
       <div><dt>加载器依赖</dt><dd>${loader ? `${escapeHtml(loader.id)}${loader.version ? ` @ ${escapeHtml(loader.version)}` : ''}` : '未声明'}</dd></div>
       <div><dt>已知冲突</dt><dd>${escapeHtml(appearance.conflicts?.join('、') || '未声明')}</dd></div>
       ${loader?.source ? `<div><dt>加载器来源</dt><dd><a href="${escapeHtml(safeExternalUrl(loader.source))}" target="_blank" rel="noreferrer">打开来源</a></dd></div>` : ''}
-      ${appearance.previews?.length ? `<div><dt>预览来源</dt><dd>${appearance.previews.map(url => `<a href="${escapeHtml(safeExternalUrl(url))}" target="_blank" rel="noreferrer">预览</a>`).join('、')}</dd></div>` : ''}
     </dl>${appearance.notes ? `<p class="section-note">${escapeHtml(appearance.notes)}</p>` : ''}<p class="section-note">加载器安装、发现、加载、切换与运行兼容由下游 loader 或宿主负责。</p></section>` : ''
   return `
     <div class="detail-heading"><span class="detail-mark pack-detail-mark"><i data-lucide="boxes"></i></span>
-      <div><span class="eyebrow">FEATURE PACK</span><h2>${escapeHtml(metadata.name)}</h2><p>${escapeHtml(metadata.id)}</p></div></div>
+      <div><span class="eyebrow">FEATURE PACK · v${escapeHtml(metadata.version)}</span><h2>${escapeHtml(metadata.name)}</h2><p>${escapeHtml(pack.author)} · ${escapeHtml(pack.license)} · ${escapeHtml(metadata.id)}</p></div></div>
     <p class="detail-description">${escapeHtml(metadata.description || '开发者未提供功能简介。')}</p>
-    <div class="trust-strip" aria-label="整合包状态">
-      <span class="trust-item trust-positive"><i data-lucide="package-check"></i><span>结构已检验</span></span>
-      <span class="trust-item"><i data-lucide="external-link"></i><span>来源未解析</span></span>
-      <span class="trust-item trust-warning"><i data-lucide="triangle-alert"></i><span>宿主未测试</span></span>
-    </div>
     <div class="detail-actions action-grid">
       <a class="command primary" href="${assetUrl(pack.archiveUrl)}" download><i data-lucide="archive"></i>${appearance ? '下载皮肤包' : '下载整合包'}</a>
       <a class="command" href="${assetUrl(pack.packUrl)}" download><i data-lucide="file-json"></i>清单</a>
       <a class="command" href="${assetUrl(pack.reportUrl)}" download><i data-lucide="package-check"></i>检验报告</a>
     </div>
-    <section class="detail-section detail-introduction"><h3>${appearance ? '皮肤包介绍' : '整合包介绍'}</h3><p class="detail-copy">${escapeHtml(metadata.introduction || metadata.description || '开发者未提供更详细的整合包介绍。')}</p></section>
-    <section class="detail-section"><div class="section-title"><h3>包含内容</h3><span class="section-count">${components.length} 项</span></div>
-      <div class="included-list">${components.length ? components.map(component => `<div class="included-item"><span><strong>${escapeHtml(component.ref || component.id || '未命名组件')}</strong><small>${escapeHtml(component.version || '未指定版本')}${component.required === false ? ' · 可选' : ' · 必需'}</small></span></div>`).join('') : '<p class="empty-inline">开发者未声明包含内容</p>'}</div>
-    </section>
-    <section class="detail-section"><h3>标签</h3>${renderTags(tags)}</section>
-    <section class="detail-section"><h3>版本适配</h3><dl class="facts">
-      <div><dt>整合包版本</dt><dd>${escapeHtml(metadata.version || '未声明')}</dd></div>
-      <div><dt>DSH / 内核</dt><dd>${escapeHtml(pack.requires?.dsh || '作者未声明')}</dd></div>
+    <dl class="facts detail-summary-facts" aria-label="适配摘要">
+      <div><dt>声明支持版本</dt><dd>${escapeHtml(pack.requires?.dsh || '作者未声明')}</dd></div>
       <div><dt>平台</dt><dd>${escapeHtml(formatPlatforms(pack.requires))}</dd></div>
+      <div><dt>包含内容</dt><dd>${components.length} 个组件</dd></div>
+      <div><dt>归档大小</dt><dd>${pack.archiveSize.toLocaleString('zh-CN')} 字节</dd></div>
+    </dl>
+    ${renderTags(tags)}
+    ${renderRelatedLinks(relatedLinks)}
+    <div class="trust-strip" aria-label="整合包状态">
+      <span class="trust-item trust-positive"><i data-lucide="package-check"></i><span>结构已检验</span></span>
+      <span class="trust-item"><i data-lucide="external-link"></i><span>来源未解析</span></span>
+      <span class="trust-item trust-warning"><i data-lucide="triangle-alert"></i><span>宿主未测试</span></span>
+    </div>
+    ${appearance ? renderPreviews(appearance.previews, metadata.name, '上游展示图片；不代表当前宿主运行实测。') : ''}
+    ${metadata.introduction && metadata.introduction !== metadata.description ? `<section class="detail-section"><h3>详细介绍</h3><p class="detail-copy">${escapeHtml(metadata.introduction)}</p></section>` : ''}
+    <div class="detail-columns">
+    <section class="detail-section"><div class="section-title"><h3>包含内容</h3><span class="section-count">${components.length} 项</span></div>
+      <div class="included-list">${components.length ? components.map(component => `<div class="included-item"><span><strong>${escapeHtml(component.ref || component.id || '未命名组件')}</strong><small>${escapeHtml(component.version || '未指定版本')}${component.required === false ? ' · 可选' : ' · 必需'}</small></span>${componentSourceUrl(component.ref) !== '#' ? `<a class="component-source" href="${escapeHtml(componentSourceUrl(component.ref))}" target="_blank" rel="noreferrer" title="打开组件原始来源" aria-label="打开 ${escapeHtml(component.ref)} 原始来源"><i data-lucide="external-link"></i></a>` : ''}</div>`).join('') : '<p class="empty-inline">开发者未声明包含内容</p>'}</div>
+    </section>
+    <div><section class="detail-section"><h3>宿主要求</h3><dl class="facts">
+      <div><dt>包格式</dt><dd>EAC Feature Pack v1</dd></div>
       <div><dt>宿主能力</dt><dd>${escapeHtml(pack.requires?.hostCapabilities?.join('、') || '无额外要求')}</dd></div>
     </dl><p class="section-note">以上是包作者声明的适配范围，不代表宿主已完成运行验收。</p></section>
-    <section class="detail-section"><h3>相关链接</h3>${renderRelatedLinks(relatedLinks)}</section>
-    <section class="detail-section"><h3>发布信息</h3><dl class="facts">
-      <div><dt>版本</dt><dd>${escapeHtml(metadata.version)}</dd></div>
-      <div><dt>开发者</dt><dd>${escapeHtml(pack.author)}</dd></div>
-      <div><dt>许可证</dt><dd>${escapeHtml(pack.license)}</dd></div>
-      <div><dt>分类</dt><dd>${escapeHtml(categoryLabels[metadata.category] || '未分类')}</dd></div>
-      <div><dt>格式</dt><dd>EAC Feature Pack v1</dd></div>
-      <div><dt>内核要求</dt><dd>${escapeHtml(pack.requires?.dsh || '作者未声明')}</dd></div>
-      <div><dt>来源</dt><dd>${catalog.demo ? '测试来源占位，不是真实发布' : `<a href="${escapeHtml(safeExternalUrl(pack.source))}" target="_blank" rel="noreferrer">开发者发布页面</a>`}</dd></div>
-    </dl></section>${appearanceSection}
-    <section class="detail-section"><h3>收录检验</h3>
+    ${appearanceSection}</div></div>
+    <details class="detail-section prompt-accordion"><summary><strong>收录检验</strong></summary>
       <dl class="check-list">
         <div><dt>清单与归档结构</dt><dd class="check-pass"><i data-lucide="check-circle-2"></i>已通过</dd></div>
         <div><dt>文件 SHA-256</dt><dd class="check-pass"><i data-lucide="check-circle-2"></i>已匹配</dd></div>
@@ -358,11 +370,11 @@ function intakeDetail(pack) {
         <div><dt>宿主运行</dt><dd>未测试</dd></div>
       </dl>
       <p class="section-note">插件来源尚未解析，宿主运行尚未测试。检查通过不代表安装兼容或安全认证。</p>
-    </section>
-    <section class="detail-section"><h3>下载校验</h3>
+    </details>
+    <details class="detail-section prompt-accordion"><summary><strong>下载校验 · SHA-256</strong></summary>
       <p>${pack.archiveSize.toLocaleString('zh-CN')} 字节 · 开发者归档原始字节</p>
       <div class="digest-line"><code>${escapeHtml(pack.archiveDigest)}</code><button class="copy-button" data-copy="${escapeHtml(pack.archiveDigest.slice(7))}" type="button" title="复制 SHA-256" aria-label="复制 SHA-256"><i data-lucide="clipboard"></i></button></div>
-    </section>
+    </details>
     <p class="section-note">版本及兼容条件由开发者声明，Mojobox 不安装或执行组件。</p>`
 }
 
@@ -374,56 +386,59 @@ function skinDetail(pack) {
   const promptSections = Array.isArray(pack.requiredPromptSections) ? pack.requiredPromptSections : []
   const implementationFiles = pack.references?.implementation || []
   const relatedLinks = [
+    pack.origin?.projectUrl ? { label: '原项目', url: pack.origin.projectUrl } : null,
+    !pack.origin?.projectUrl && pack.origin?.repository ? { label: '上游仓库', url: pack.origin.repository } : null,
     pack.authorRepository ? { label: '作者仓库', url: pack.authorRepository } : null,
-    packageUrl !== '#' ? { label: '皮肤资料包仓库', url: packageUrl } : null,
-    sourceUrl !== '#' ? { label: '来源仓库', url: sourceUrl } : null,
+    packageUrl !== '#' ? { label: 'Prompt 资料来源', url: packageUrl } : null,
     ...(Array.isArray(pack.links) ? pack.links : [])
   ].filter(Boolean)
   return `
     <div class="detail-heading"><span class="detail-mark pack-detail-mark"><i data-lucide="file-json"></i></span>
       <div><span class="eyebrow">SKIN PROMPT PACKAGE</span><h2>${escapeHtml(pack.metadata.name)}</h2><p>${escapeHtml(pack.metadata.id)}</p></div></div>
     <p class="detail-description">${escapeHtml(pack.metadata.description)}</p>
-    <div class="trust-strip" aria-label="皮肤资料状态">
-      <span class="trust-item trust-positive"><i data-lucide="package-check"></i><span>来源已固定</span></span>
-      <span class="trust-item"><i data-lucide="file-json"></i><span>Prompt 已收录</span></span>
-      <span class="trust-item trust-warning"><i data-lucide="triangle-alert"></i><span>不可直接安装</span></span>
-    </div>
     <div class="detail-actions action-grid">
       <a class="command primary" href="${assetUrl(pack.promptUrl)}" download><i data-lucide="download"></i>下载 Prompt</a>
       <a class="command" href="${assetUrl(pack.manifestUrl)}" download><i data-lucide="file-json"></i>清单</a>
       <a class="command" href="${assetUrl(pack.readmeUrl)}" download><i data-lucide="file-text"></i>说明</a>
     </div>
-    <p class="notice">这是可供 AI 阅读、复刻和继续设计的皮肤资料包，不是可安装插件。Mojobox 不执行 Prompt；安装、加载、切换和运行兼容由目标宿主或 loader 负责。</p>
-    <section class="detail-section detail-introduction"><h3>皮肤包介绍</h3><p class="detail-copy">${escapeHtml(pack.metadata.introduction || pack.metadata.description || '作者未提供更详细的皮肤包介绍。')}</p></section>
-    <section class="detail-section"><h3>标签</h3>${renderTags(tags)}</section>
-    <section class="detail-section"><h3>版本适配</h3><dl class="facts">
+    <dl class="facts detail-summary-facts" aria-label="适配摘要">
       <div><dt>目标界面</dt><dd>${escapeHtml(pack.target?.surface || '未声明')}</dd></div>
-      <div><dt>目标版本</dt><dd>${escapeHtml(pack.target?.version || pack.target?.dsh || '未声明')}</dd></div>
+      <div><dt>声明支持版本</dt><dd>${escapeHtml(pack.target?.version || pack.target?.dsh || '未声明')}</dd></div>
       <div><dt>主题</dt><dd>${escapeHtml(pack.themes?.join('、') || '未声明')}</dd></div>
-      <div><dt>保留行为</dt><dd>${pack.target?.preserveBehavior === true ? '是' : '未声明'}</dd></div>
-    </dl><p class="section-note">皮肤资料只声明目标界面和主题范围，不代表 loader 或宿主已经完成兼容测试。</p></section>
+      <div><dt>作者 / 许可</dt><dd>${escapeHtml(pack.author)} · ${escapeHtml(pack.license)}</dd></div>
+    </dl>
+    ${renderTags(tags)}
+    ${renderRelatedLinks(relatedLinks)}
+    <div class="trust-strip" aria-label="皮肤资料状态">
+      <span class="trust-item trust-positive"><i data-lucide="package-check"></i><span>来源已固定</span></span>
+      <span class="trust-item"><i data-lucide="file-json"></i><span>Prompt 已收录</span></span>
+      <span class="trust-item trust-warning"><i data-lucide="triangle-alert"></i><span>不可直接安装</span></span>
+    </div>
+    ${renderPreviews(pack.origin?.previews, pack.metadata.name, pack.origin?.notes)}
+    <p class="notice">这是皮肤设计资料，不可直接安装。安装、加载、切换和运行兼容由目标宿主或 loader 负责。</p>
+    ${pack.metadata.introduction && pack.metadata.introduction !== pack.metadata.description ? `<section class="detail-section"><h3>详细介绍</h3><p class="detail-copy">${escapeHtml(pack.metadata.introduction)}</p></section>` : ''}
+    <div class="detail-columns">
     <section class="detail-section"><div class="section-title"><h3>包含内容</h3><span class="section-count">3 个文件</span></div><dl class="facts">
       <div><dt>manifest.json</dt><dd>皮肤资料清单</dd></div>
       <div><dt>prompt.md</dt><dd>设计与复刻说明</dd></div>
       <div><dt>README.md</dt><dd>收录说明</dd></div>
       ${implementationFiles.length ? `<div><dt>引用文件</dt><dd>${implementationFiles.map(file => `<code>${escapeHtml(file)}</code>`).join('<br>')}</dd></div>` : ''}
     </dl></section>
-    <section class="detail-section"><h3>来源信息</h3><dl class="facts">
-      <div><dt>作者</dt><dd>${escapeHtml(pack.author)}</dd></div>
-      <div><dt>许可证</dt><dd>${escapeHtml(pack.license)}</dd></div>
+    <section class="detail-section"><h3>资料溯源</h3><dl class="facts">
       <div><dt>来源提交</dt><dd class="mono">${escapeHtml(pack.source?.revision || '未声明')}</dd></div>
-      <div><dt>来源仓库</dt><dd>${sourceUrl !== '#' ? `<a href="${escapeHtml(sourceUrl)}" target="_blank" rel="noreferrer">打开 GitHub</a>` : '未声明'}</dd></div>
-      <div><dt>引用来源</dt><dd>${escapeHtml(pack.sources?.map(source => `${source.project}: ${source.repositoryPath}`).join('；') || '未声明')}</dd></div>
+      <div><dt>资料仓库</dt><dd>${sourceUrl !== '#' ? `<a href="${escapeHtml(sourceUrl)}" target="_blank" rel="noreferrer">Prompt 资料仓库</a>` : '未声明'}</dd></div>
+      <div><dt>历史引用路径</dt><dd>${escapeHtml(pack.sources?.map(source => `${source.project}: ${source.repositoryPath}`).join('；') || '未声明')}</dd></div>
+      <div><dt>来源核对</dt><dd>${pack.origin?.evidence?.map(url => `<a href="${escapeHtml(safeExternalUrl(url))}" target="_blank" rel="noreferrer">核对记录</a>`).join(' · ') || '未提供'}</dd></div>
     </dl></section>
-    <section class="detail-section"><h3>相关链接</h3>${renderRelatedLinks(relatedLinks)}</section>
+    </div>
     <details class="detail-section prompt-accordion"><summary><span><strong>Prompt 章节</strong><small>默认折叠，展开查看 ${promptSections.length} 个章节</small></span><span class="section-count">${promptSections.length} 项</span></summary><dl class="facts">
       ${promptSections.map(section => `<div><dt>${escapeHtml(section)}</dt><dd>已收录</dd></div>`).join('')}
     </dl></details>
-    <section class="detail-section"><h3>文件摘要</h3><dl class="facts">
+    <details class="detail-section prompt-accordion"><summary><strong>文件摘要 · SHA-256</strong></summary><dl class="facts">
       <div><dt>manifest.json</dt><dd class="mono">${escapeHtml(pack.files.manifest)}</dd></div>
       <div><dt>prompt.md</dt><dd class="mono">${escapeHtml(pack.files.prompt)}</dd></div>
       <div><dt>README.md</dt><dd class="mono">${escapeHtml(pack.files.readme)}</dd></div>
-    </dl></section>`
+    </dl></details>`
 }
 
 function renderIntake() {
@@ -468,8 +483,8 @@ function renderIntake() {
         <section class="home-content"><div class="section-heading"><div><span class="eyebrow">EXPLORE</span><h2>从这里开始</h2></div><p>按资源类型浏览，打开卡片查看来源、检查范围和下载文件。</p></div><div class="entry-grid">${entryCard('packs', 'boxes', '功能包', '开发者提交的可收纳功能组合与 Feature Pack。', packs.length, 'entry-pack')}${entryCard('skins', 'file-json', '皮肤包', '皮肤归档、设计 Prompt 与可追溯来源。', skins.length, 'entry-skin')}</div></section>
         <section class="principles"><div><span class="eyebrow">MOJOBOX ROLE</span><h2>让上游内容更容易被找到</h2></div><div class="principle-list"><div><i data-lucide="archive"></i><span><strong>收纳</strong><small>保存开发者提供的原始归档和资料。</small></span></div><div><i data-lucide="shield-check"></i><span><strong>检验</strong><small>检查结构、摘要和来源记录，不替作者维护内容。</small></span></div><div><i data-lucide="download"></i><span><strong>供给</strong><small>为宿主、加载器和下游工具提供可靠下载来源。</small></span></div></div></section>
       </main>` : `
-      <main class="catalog-page" aria-label="${currentLabel}目录">
-        ${isDetail || isMissingDetail ? `<section class="catalog-toolbar detail-toolbar" aria-label="详情页搜索和筛选"><label class="search-field"><i data-lucide="search"></i><input type="search" value="${escapeHtml(state.query)}" placeholder="搜索名称、ID 或包说明" aria-label="搜索${currentLabel}" /></label>${state.tab === 'packs' ? `<label class="catalog-filter"><span>分类</span><select id="category-filter"><option value="all">全部功能包</option>${categoryOptions}</select></label>` : '<span class="catalog-hint"><i data-lucide="info"></i>皮肤包按来源、主题和目标界面整理</span>'}</section><section class="detail-page"><a class="back-link" href="#/${state.tab}" data-tab="${state.tab}"><i data-lucide="arrow-up-right"></i>返回${currentLabel}列表</a><div class="detail-page-body" id="detail">${isDetail ? (state.tab === 'skins' ? skinDetail(selected) : intakeDetail(selected)) : `<div class="detail-empty"><i data-lucide="box"></i><h2>未找到此${currentLabel}</h2><p>未找到此整合包。当前暂无正式收录内容，链接对应的内容不在当前目录中，请返回列表选择其他项目。</p></div>`}</div></section>` : `<section class="catalog-intro"><div><span class="eyebrow">${state.tab === 'skins' ? 'APPEARANCE COLLECTION' : 'FEATURE COLLECTION'}</span><h1>${currentLabel}</h1><p>${state.tab === 'skins' ? '收纳皮肤归档、设计 Prompt 和来源信息，保留各自的下载文件与检查范围。' : '收纳经过结构检查的功能整合包，为宿主和下游工具提供明确的原始来源。'}</p></div><div class="catalog-count"><strong>${items.length}</strong><span>当前显示</span></div></section>
+      <main class="catalog-page ${isDetail || isMissingDetail ? 'is-detail' : ''}" aria-label="${currentLabel}目录">
+        ${isDetail || isMissingDetail ? `<section class="detail-page"><a class="back-link" href="#/${state.tab}" data-tab="${state.tab}"><i data-lucide="arrow-up-right"></i>返回${currentLabel}列表</a><div class="detail-page-body" id="detail">${isDetail ? (state.tab === 'skins' ? skinDetail(selected) : intakeDetail(selected)) : `<div class="detail-empty"><i data-lucide="box"></i><h2>未找到此${currentLabel}</h2><p>未找到此整合包。当前暂无正式收录内容，链接对应的内容不在当前目录中，请返回列表选择其他项目。</p></div>`}</div></section>` : `<section class="catalog-intro"><div><span class="eyebrow">${state.tab === 'skins' ? 'APPEARANCE COLLECTION' : 'FEATURE COLLECTION'}</span><h1>${currentLabel}</h1><p>${state.tab === 'skins' ? '收纳皮肤归档、设计 Prompt 和来源信息，保留各自的下载文件与检查范围。' : '收纳经过结构检查的功能整合包，为宿主和下游工具提供明确的原始来源。'}</p></div><div class="catalog-count"><strong>${items.length}</strong><span>当前显示</span></div></section>
         <section class="catalog-toolbar" aria-label="目录搜索和筛选"><label class="search-field"><i data-lucide="search"></i><input type="search" value="${escapeHtml(state.query)}" placeholder="搜索名称、ID 或包说明" aria-label="搜索${currentLabel}" /></label>${state.tab === 'packs' ? `<label class="catalog-filter"><span>分类</span><select id="category-filter"><option value="all">全部功能包</option>${categoryOptions}</select></label>` : '<span class="catalog-hint"><i data-lucide="info"></i>皮肤包按来源、主题和目标界面整理</span>'}</section>
         <div class="catalog-grid ${items.length ? '' : 'is-empty'}">${items.length ? items.map(item => state.tab === 'skins' ? skinRow(item) : packRow(item)).join('') : `<div class="no-results">${emptyState(state.tab === 'skins' ? skins.length : packs.length, currentLabel)}</div>`}</div>`}
       </main>`}
@@ -543,6 +558,10 @@ function selectItem(id, tab = state.tab) {
 }
 
 function bindEvents() {
+  document.querySelectorAll('.detail-previews img').forEach(image => image.addEventListener('error', () => {
+    image.hidden = true
+    image.closest('figure').classList.add('preview-unavailable')
+  }))
   document.querySelectorAll('[data-tab]').forEach(button => button.addEventListener('click', () => {
     state.tab = button.dataset.tab
     state.selected = null

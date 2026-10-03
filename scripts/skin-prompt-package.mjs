@@ -52,6 +52,16 @@ export async function collectSkinPromptPackages(root = rootDir) {
   const schemaBytes = await readFile(join(root, 'schemas/skin-prompt-package.schema.json'))
   if (digest(schemaBytes) !== source.schemaDigest) throw new Error('Skin prompt schema digest mismatch')
   if (!Array.isArray(source.packages) || !source.packages.length) throw new Error('No skin prompt packages declared')
+  let origins = {}
+  try { origins = JSON.parse(await readFile(join(sourceDir, 'origins.json'), 'utf8')) }
+  catch (error) { if (error.code !== 'ENOENT') throw error }
+  for (const [id, origin] of Object.entries(origins)) {
+    if (!source.packages.some(entry => entry.id === id)) throw new Error(`Unknown skin origin: ${id}`)
+    assertHttps(origin.repository, 'Skin origin repository')
+    assertHttps(origin.projectUrl, 'Skin origin project')
+    if (!Array.isArray(origin.previews) || !Array.isArray(origin.evidence) || !origin.evidence.length) throw new Error(`Missing skin origin references: ${id}`)
+    for (const url of [...origin.previews.map(preview => preview.url), ...origin.evidence]) assertHttps(url, 'Skin origin reference')
+  }
   const declared = new Set()
   const packages = []
   for (const entry of source.packages) {
@@ -59,7 +69,7 @@ export async function collectSkinPromptPackages(root = rootDir) {
     declared.add(entry.id)
     const directory = join(sourceDir, entry.id)
     const inspected = await inspectSkinPromptPackage(directory, entry.files)
-    packages.push({ ...inspected, source: { repository: source.repository, revision: source.revision }, path: entry.path })
+    packages.push({ ...inspected, source: { repository: source.repository, revision: source.revision }, path: entry.path, origin: origins[entry.id] })
   }
   const directories = (await readdir(sourceDir, { withFileTypes: true })).filter(entry => entry.isDirectory()).map(entry => entry.name).sort()
   if (JSON.stringify(directories) !== JSON.stringify([...declared].sort())) throw new Error('Undeclared skin prompt package directory')
@@ -81,6 +91,7 @@ export async function buildSkinPromptCatalog(root = rootDir, output = join(root,
       metadata: { id: manifest.id, name: manifest.name, nameEn: manifest.nameEn || '', description: manifest.description || '', tags: manifest.tags || [], category: 'appearance' },
       author: manifest.author,
       source: item.source,
+      origin: item.origin,
       sources: manifest.sources,
       references: manifest.references,
       license: manifest.references.license.spdx,

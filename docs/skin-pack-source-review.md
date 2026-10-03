@@ -21,6 +21,21 @@ Mojobox 不实现皮肤加载、切换、渲染、素材管理或运行时回滚
 
 ## 上游事实
 
+### 原项目与资料来源展示补充（2026-10-04）
+
+十套历史 Prompt 的原始文件和固定摘要继续保留。目录维护的原项目映射位于
+`catalog/skin-prompt-packages/origins.json`，展示时区分原项目、Prompt 资料来源与 EAC/AIO 历史引用路径。
+
+- 女仆工坊的原项目为 `Small-tailqwq/dsh-deep-whale`，依据上游社区来源元数据。
+- 蓝色幻想、龙的传人、初音未来、Minecraft、交易终端、鲸吟和 XP 已由
+  `zhu1090093659/dsh-web-ui` 迁入 `zhu1090093659/dsh-skins`；已核对固定的子模块映射及各皮肤清单。
+- QQ98 与 THS 的 npm 发布元数据仍指向 `dsh-web-ui`，原项目已停用它们；保留历史资料，暂不提供未经核实的图片。
+- 新版原项目预览与历史 Prompt 引用版本可能不同，页面在图片前标明区别。素材许可沿用各自来源，不以历史 Prompt 的代码许可替代新版素材许可。
+- Prompt 资料路径为 `skin-prompts/packages/<id>`，修正此前遗漏 `skin-prompts/` 的链接。
+
+自制薄包的发布来源仍为 Mojobox；组件原项目链接从 `authoring/upstream-snapshot.json` 的已核对仓库
+与清单中的 GitHub 引用生成，加载器来源单独标注。链接展示不改变来源解析和运行验证状态。
+
 ### 皮肤定义与来源资料
 
 - 仓库：[DSH-EAC/dsh-skin-prompt-packages](https://github.com/DSH-EAC/dsh-skin-prompt-packages)
