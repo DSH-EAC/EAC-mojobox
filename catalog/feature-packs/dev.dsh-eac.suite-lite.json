@@ -1,10 +1,10 @@
 {
   "format": "eac-feature-pack-v1",
-  "id": "dev.dsh-eac.power-toolbox",
-  "version": "0.2.0",
+  "id": "dev.dsh-eac.suite-lite",
+  "version": "0.1.0",
   "category": "function",
   "source": "https://github.com/DSH-EAC/dsh-mojobox",
   "author": "DSH-EAC",
   "license": "MIT",
-  "sha256": "a40ccf445a8b22fa97f885e2159858410ad4700a259526b89949e46107f53de1"
+  "sha256": "55066da2e7083777934d39bdbc6deebca004e75ab576198ccf06375fc44cf0d3"
 }
