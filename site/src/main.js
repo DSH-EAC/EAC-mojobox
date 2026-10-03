@@ -54,6 +54,42 @@ const categoryLabels = {
   workflow: '工作流包'
 }
 
+const tagLabels = {
+  '2008': '2008 年风格', anime: '动漫', art: '艺术', blue: '蓝色', chinese: '中式',
+  'crystal-blue': '水晶蓝', dragon: '龙', dreamskin: '梦幻皮肤', 'dual-theme': '双主题',
+  game: '游戏', glass: '玻璃质感', goddess: '女神', 'great-wall': '长城', 'ice-blue': '冰蓝',
+  idol: '偶像', indigo: '靛蓝', 'ink-wash': '水墨', live: '动态', longbridge: '长桥',
+  loong: '中国龙', luna: '月光界面', maid: '女仆', miku: '初音未来', minecraft: '我的世界',
+  music: '音乐', navy: '海军蓝', nostalgia: '怀旧', ocean: '海洋', ornate: '华丽装饰',
+  panorama: '全景', pixel: '像素', qq: 'QQ 风格', red: '红色', retro: '复古', skybox: '天空盒',
+  'start-button': '开始按钮', stock: '股票', terminal: '终端', ticker: '行情', trading: '交易',
+  translucent: '半透明', vocaloid: '虚拟歌手', voxel: '体素', waveform: '波形',
+  whale: '鲸鱼', windows: '视窗系统', xp: '经典 XP',
+  genui: '生成式界面', modsearch: '模型搜索', visualize: '可视化', 'agent-teams': '智能体团队',
+  catppuccin: '四色主题', 'client-ui-skin-deep-whale-manager': '鲸鱼娘管理器',
+  'client-ui-skin-maid-atelier': '女仆工坊', 'client-ui-skin-orca-link': '虎鲸链路',
+  navbar: '导航栏', 'browser-skill-dsh-plugin': '浏览器工具', 'better-sidebar': '增强侧栏',
+  'bloom-theme': '花开主题', 'chat-import': '会话导入', context: '上下文观测',
+  'dream-skin': '梦幻皮肤', 'opencode-palette': '开放代码配色', 'plugin-wallpaper-engine': '动态壁纸',
+  'session-manager': '会话管理', 'soul-md': '长期记忆', 'undo-savepoint': '快照恢复',
+  'univer-office': '办公套件', 'vision-router': '视觉路由', dshmarket: '插件市场',
+  'project-memory': '项目记忆', 'theme-endfield': '终末地主题', 'meow-smooth': '平滑滚动',
+  'open-sea-skin': '开放海洋主题'
+}
+
+function tagLabel(tag) {
+  const key = String(tag).toLowerCase()
+  return Object.hasOwn(tagLabels, key) ? tagLabels[key] : tag
+}
+
+function contentTags(pack) {
+  return Array.isArray(pack.metadata.tags) ? pack.metadata.tags : (pack.components || []).map(component => (component.ref || component.id || '').split('/').pop().replace(/^dsh-/, ''))
+}
+
+function formatThemes(themes) {
+  return (themes || []).map(theme => theme === 'light' ? '浅色' : theme === 'dark' ? '深色' : theme).join('、') || '未声明'
+}
+
 const escapeHtml = value => String(value ?? '')
   .replaceAll('&', '&amp;')
   .replaceAll('<', '&lt;')
@@ -79,7 +115,7 @@ function safeExternalUrl(value) {
 }
 
 function renderTags(tags, fallback = '未声明') {
-  const values = [...new Set((Array.isArray(tags) ? tags : []).filter(Boolean))]
+  const values = [...new Set((Array.isArray(tags) ? tags : []).filter(Boolean).map(tagLabel))]
   return values.length ? `<div class="tag-list">${values.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}</div>` : `<p class="empty-inline">${fallback}</p>`
 }
 
@@ -150,12 +186,12 @@ function filteredItems() {
   const { packs, skins } = catalog.mode === 'intake' ? intakeCollections() : { packs: catalog.packs, skins: catalog.skinPackages || [] }
   if (state.tab === 'skins') return skins.filter(pack => {
     const appearanceText = pack.appearance ? JSON.stringify(pack.appearance) : ''
-    const matchesQuery = !query || `${pack.metadata.name} ${pack.metadata.nameEn || ''} ${pack.metadata.id} ${pack.metadata.description} ${(pack.metadata.tags || []).join(' ')} ${appearanceText}`.toLowerCase().includes(query)
+    const matchesQuery = !query || `${pack.metadata.name} ${pack.metadata.nameEn || ''} ${pack.metadata.id} ${pack.metadata.description} ${contentTags(pack).join(' ')} ${contentTags(pack).map(tagLabel).join(' ')} ${formatThemes(pack.themes)} ${appearanceText}`.toLowerCase().includes(query)
     return matchesQuery
   })
   return packs.filter(pack => {
     const appearanceText = pack.appearance ? JSON.stringify(pack.appearance) : ''
-    const matchesQuery = !query || `${pack.metadata.name} ${pack.metadata.id} ${pack.metadata.description} ${appearanceText}`.toLowerCase().includes(query)
+    const matchesQuery = !query || `${pack.metadata.name} ${pack.metadata.id} ${pack.metadata.description} ${contentTags(pack).join(' ')} ${contentTags(pack).map(tagLabel).join(' ')} ${appearanceText}`.toLowerCase().includes(query)
     const matchesCategory = state.category === 'all' || pack.metadata.category === state.category
     return matchesQuery && matchesCategory
   })
@@ -204,7 +240,7 @@ function skinRow(pack) {
       <button class="pack-select" data-select="${escapeHtml(pack.metadata.id)}" aria-pressed="${state.selected === pack.metadata.id}" type="button">
         <span class="card-topline"><span class="item-mark pack-mark"><i data-lucide="file-json"></i></span><span class="badge badge-lock">AI 皮肤资料</span></span>
         <strong class="card-title">${escapeHtml(pack.metadata.name)}</strong>
-        <span class="card-author">${escapeHtml(pack.author)} · ${pack.themes.join(' / ')} 主题</span>
+        <span class="card-author">${escapeHtml(pack.author)} · ${escapeHtml(formatThemes(pack.themes))}主题</span>
         <span class="card-description">${escapeHtml(pack.metadata.description || '未提供皮肤说明。')}</span>
         <span class="card-status"><span class="badge badge-parsed">来源已固定</span><span class="badge badge-warning">不可直接安装</span></span>
         <span class="card-inspect">查看详情 <i data-lucide="arrow-up-right"></i></span>
@@ -314,7 +350,7 @@ function intakeDetail(pack) {
   const appearance = pack.metadata.category === 'appearance' ? pack.appearance || {} : null
   const loader = appearance?.loader
   const components = Array.isArray(pack.components) ? pack.components : []
-  const tags = [...(Array.isArray(metadata.tags) ? metadata.tags : components.map(component => (component.ref || component.id || '').split('/').pop().replace(/^dsh-/, ''))), categoryLabels[metadata.category] || '未分类']
+  const tags = [...contentTags(pack), categoryLabels[metadata.category] || '未分类']
   const relatedLinks = [
     loader?.source ? { label: '加载器来源', url: loader.source } : null,
     pack.authorRepository ? { label: '作者仓库', url: pack.authorRepository } : null,
@@ -404,7 +440,7 @@ function skinDetail(pack) {
     <dl class="facts detail-summary-facts" aria-label="适配摘要">
       <div><dt>目标界面</dt><dd>${escapeHtml(pack.target?.surface || '未声明')}</dd></div>
       <div><dt>声明支持版本</dt><dd>${escapeHtml(pack.target?.version || pack.target?.dsh || '未声明')}</dd></div>
-      <div><dt>主题</dt><dd>${escapeHtml(pack.themes?.join('、') || '未声明')}</dd></div>
+      <div><dt>主题</dt><dd>${escapeHtml(formatThemes(pack.themes))}</dd></div>
       <div><dt>作者 / 许可</dt><dd>${escapeHtml(pack.author)} · ${escapeHtml(pack.license)}</dd></div>
     </dl>
     ${renderTags(tags)}

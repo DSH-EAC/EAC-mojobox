@@ -149,7 +149,7 @@ test('skin search covers both formats without inheriting functional category fil
     assert.match(site.app.innerHTML, /data-select="dev.example.skin"/)
     assert.doesNotMatch(site.app.innerHTML, /data-select="maid-atelier"/)
   }
-  for (const query of ['Abyssal Maid Atelier', 'Prompt 资料', 'maid']) {
+  for (const query of ['Abyssal Maid Atelier', 'Prompt 资料', 'maid', '女仆', '浅色', '深色']) {
     site.run(`state.query = ${JSON.stringify(query)}; render()`)
     assert.match(site.app.innerHTML, /data-select="maid-atelier"/)
   }
@@ -225,6 +225,10 @@ test('prompt details distinguish original projects from fixed prompt provenance 
   assert.ok(html.indexOf('<img') < html.indexOf('class="detail-columns"'))
   assert.doesNotMatch(html, /javascript:|src="\/EAC-mojobox\/\.\.\//)
   assert.match(html, /不可直接安装/)
+  assert.match(html, /<span class="tag">女仆<\/span>/)
+  assert.match(html, /<dd>浅色、深色<\/dd>/)
+  assert.doesNotMatch(html, /<span class="tag">maid<\/span>|<dd>light、dark<\/dd>/)
+  assert.match(site.run('skinRow(catalog.skinPackages[0])'), /浅色、深色主题/)
 })
 
 for (const base of ['/', '/dsh-mojobox/']) {
