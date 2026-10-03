@@ -1,10 +1,10 @@
 {
   "format": "eac-feature-pack-v1",
-  "id": "dev.dsh-eac.power-toolbox",
-  "version": "0.2.0",
+  "id": "dev.dsh-eac.conversation-migration",
+  "version": "0.1.0",
   "category": "function",
   "source": "https://github.com/DSH-EAC/dsh-mojobox",
   "author": "DSH-EAC",
   "license": "MIT",
-  "sha256": "a40ccf445a8b22fa97f885e2159858410ad4700a259526b89949e46107f53de1"
+  "sha256": "fdb5da4e866ff78a9d4d6777390e6761229e6b5bec6ceb411ec674f63c0f3bca"
 }

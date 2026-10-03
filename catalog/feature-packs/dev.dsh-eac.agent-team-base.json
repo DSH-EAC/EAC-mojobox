@@ -1,10 +1,10 @@
 {
   "format": "eac-feature-pack-v1",
-  "id": "dev.dsh-eac.power-toolbox",
+  "id": "dev.dsh-eac.agent-team-base",
   "version": "0.2.0",
   "category": "function",
   "source": "https://github.com/DSH-EAC/dsh-mojobox",
   "author": "DSH-EAC",
   "license": "MIT",
-  "sha256": "a40ccf445a8b22fa97f885e2159858410ad4700a259526b89949e46107f53de1"
+  "sha256": "6725ac57233775f23357a8b8c9540902c163283dae9d906ee5a0f0e0574218ee"
 }
