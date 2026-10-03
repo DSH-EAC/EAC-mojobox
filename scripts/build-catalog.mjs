@@ -8,6 +8,9 @@ const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 
 export async function buildCatalog(root = rootDir, { checkOnly = false, demo = false } = {}) {
   const skinSource = await collectSkinPromptPackages(root)
+  let upstreamComponents = []
+  try { upstreamComponents = JSON.parse(await readFile(join(root, 'authoring/upstream-snapshot.json'), 'utf8')).components }
+  catch (error) { if (error.code !== 'ENOENT') throw error }
   const recordsDir = join(root, 'catalog/feature-packs')
   const entries = (await readdir(recordsDir)).filter(name => name.endsWith('.json')).sort()
   const admitted = []
@@ -39,12 +42,13 @@ export async function buildCatalog(root = rootDir, { checkOnly = false, demo = f
     const m = report.manifest
     const packUrl = `generated/packs/${record.id}.json`
     const reportUrl = `generated/reports/${record.id}.json`
+    const repositories = [...new Set(m.plugins.map(component => component.ref.startsWith('github:') ? `https://github.com/${component.ref.slice(7)}` : upstreamComponents.find(item => item.package?.name === component.ref)?.repository).filter(Boolean))]
     await writeFile(join(output, 'downloads', filename), bytes)
     await writeFile(join(output, 'packs', `${record.id}.json`), JSON.stringify(m, null, 2) + '\n')
     await writeFile(join(output, 'reports', `${record.id}.json`), JSON.stringify(report, null, 2) + '\n')
     packs.push({ format: record.format, metadata: { id: m.id, version: m.version, name: m.name, description: m.description || '', category: record.category },
       author: record.author, license: record.license, source: record.source, requires: m.requires || {},
-      components: m.plugins, appearance: record.appearance, archiveUrl: `generated/downloads/${filename}`, archiveSize: report.size,
+      components: m.plugins, appearance: record.appearance, links: repositories.map(url => ({ label: `原项目 · ${url.split('/').pop()}`, url })), archiveUrl: `generated/downloads/${filename}`, archiveSize: report.size,
       archiveDigest: `sha256:${report.sha256}`, packUrl, reportUrl, checks: report.checks, runtime: report.runtime })
   }
   const catalog = { apiVersion: 'catalog.mojobox.dev/v1alpha1', mode: 'intake', demo, plugins: [], packs, skinPackages: skinCatalog.packages, skinSource: skinSource.source || null }

@@ -98,6 +98,27 @@ test('traversal names in ZIP metadata are rejected without extracting files', as
   await assert.rejects(inspectFeaturePack(malicious), /invalid relative path|Unsupported archive path/)
 })
 
+test('catalog exposes deduplicated component repositories without replacing the pack publication source', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'mojobox-origins-'))
+  t.after(() => rm(root, { recursive: true, force: true }))
+  await mkdir(join(root, 'catalog/feature-packs'), { recursive: true })
+  await mkdir(join(root, 'artifacts'))
+  await mkdir(join(root, 'authoring'))
+  const value = { ...manifest, plugins: [{ ref: '@example/skin', version: '1.0.0' }, { ref: 'github:example/skins' }, { ref: '@example/unknown', version: '1.0.0' }] }
+  const bytes = await archive(value)
+  const record = recordFor(bytes)
+  await writeFile(join(root, 'catalog/feature-packs', `${manifest.id}.json`), JSON.stringify(record))
+  await writeFile(join(root, 'artifacts', `${manifest.id}-${manifest.version}.dshpack`), bytes)
+  await writeFile(join(root, 'authoring/upstream-snapshot.json'), JSON.stringify({ components: [
+    { repository: 'https://github.com/example/no-package' },
+    { package: { name: '@example/skin' }, repository: 'https://github.com/example/skins' }
+  ] }))
+  const { packs } = await buildCatalog(root)
+  assert.deepEqual(packs[0].links, [{ label: '原项目 · skins', url: 'https://github.com/example/skins' }])
+  assert.equal(packs[0].source, record.source)
+  assert.deepEqual(await readFile(join(root, 'site/public', packs[0].archiveUrl)), bytes)
+})
+
 test('contributed archive is copied byte-for-byte; mismatch fails before replacing catalog; removal clears downloads', async t => {
   const root = await mkdtemp(join(tmpdir(), 'mojobox-intake-'))
   t.after(() => rm(root, { recursive: true, force: true }))

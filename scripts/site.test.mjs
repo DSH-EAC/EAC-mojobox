@@ -149,7 +149,7 @@ test('skin search covers both formats without inheriting functional category fil
     assert.match(site.app.innerHTML, /data-select="dev.example.skin"/)
     assert.doesNotMatch(site.app.innerHTML, /data-select="maid-atelier"/)
   }
-  for (const query of ['Abyssal Maid Atelier', 'Prompt 资料', 'maid']) {
+  for (const query of ['Abyssal Maid Atelier', 'Prompt 资料', 'maid', '女仆', '浅色', '深色']) {
     site.run(`state.query = ${JSON.stringify(query)}; render()`)
     assert.match(site.app.innerHTML, /data-select="maid-atelier"/)
   }
@@ -196,6 +196,39 @@ test('skin prompt packages render as source material and retain deployment base'
   assert.match(site.app.innerHTML, /SKIN PROMPT PACKAGE/)
   assert.match(site.app.innerHTML, /来源已固定/)
   assert.match(site.app.innerHTML, /目标宿主或 loader/)
+})
+
+test('detail summaries place downloads, declared support, tags and original sources before contents', () => {
+  const site = loadSite('/EAC-mojobox/', mixedIntake)
+  const html = site.run('intakeDetail(catalog.packs[0])')
+  const contents = html.indexOf('class="detail-columns"')
+  for (const marker of ['下载整合包', '声明支持版本', 'tag-list', '本包发布来源']) assert.ok(html.indexOf(marker) < contents)
+  assert.equal(html.split(intakePack.metadata.description).length - 1, 1)
+  const skin = site.run('intakeDetail(catalog.packs[1])')
+  assert.ok(skin.indexOf('aria-label="皮肤预览"') < skin.indexOf('class="detail-columns"'))
+  assert.match(skin, /<img src="https:\/\/example.org\/preview.png"/)
+  assert.match(skin, /宿主未测试/)
+})
+
+test('prompt details distinguish original projects from fixed prompt provenance and reject unsafe previews', () => {
+  const data = structuredClone(mixedIntake)
+  data.skinPackages[0].origin = {
+    repository: 'https://github.com/Small-tailqwq/dsh-deep-whale', projectUrl: 'https://github.com/Small-tailqwq/dsh-deep-whale',
+    previews: [{ url: 'https://example.org/light.webp', label: '浅色' }, { url: 'javascript:alert(1)', label: 'unsafe' }], notes: '上游预览'
+  }
+  const site = loadSite('/EAC-mojobox/', data)
+  const html = site.run('skinDetail(catalog.skinPackages[0])')
+  assert.match(html, /Small-tailqwq\/dsh-deep-whale/)
+  assert.match(html, /skin-prompts\/packages\/maid-atelier/)
+  assert.match(html, /Prompt 资料来源/)
+  assert.ok(html.indexOf('原项目') < html.indexOf('资料溯源'))
+  assert.ok(html.indexOf('<img') < html.indexOf('class="detail-columns"'))
+  assert.doesNotMatch(html, /javascript:|src="\/EAC-mojobox\/\.\.\//)
+  assert.match(html, /不可直接安装/)
+  assert.match(html, /<span class="tag">女仆<\/span>/)
+  assert.match(html, /<dd>浅色、深色<\/dd>/)
+  assert.doesNotMatch(html, /<span class="tag">maid<\/span>|<dd>light、dark<\/dd>/)
+  assert.match(site.run('skinRow(catalog.skinPackages[0])'), /浅色、深色主题/)
 })
 
 for (const base of ['/', '/dsh-mojobox/']) {
