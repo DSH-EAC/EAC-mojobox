@@ -77,7 +77,8 @@ npm run preview
 部署到 GitHub Pages 子路径时：
 
 ```bash
-BASE_PATH=/dsh-mojobox/ npm run build
+BASE_PATH=/EAC-mojobox/ npm run build
+BASE_PATH=/EAC-mojobox/ npm run verify:downloads
 ```
 
 完整部署说明见[部署文档](docs/deployment.md)。

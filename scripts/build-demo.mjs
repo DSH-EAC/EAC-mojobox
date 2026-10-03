@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process'
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { copyFile, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { ZipArchive } from 'archiver'
@@ -30,6 +30,7 @@ await writeFile(join(demo, 'catalog/feature-packs', `${manifest.id}.json`), JSON
   category: 'function', source: 'https://example.org/mojobox-test-only', author: manifest.author, license: manifest.license, sha256: digest(bytes)
 }))
 await buildCatalog(demo, { demo: true })
+await copyFile(join(root, 'site/public/favicon.svg'), join(demo, 'site/public/favicon.svg'))
 execFileSync(process.execPath, [join(root, 'node_modules/vite/bin/vite.js'), 'build', '--config', 'vite.config.mjs'], {
   cwd: root, env: { ...process.env, MOJOBOX_DEMO: '1' }, stdio: 'inherit'
 })

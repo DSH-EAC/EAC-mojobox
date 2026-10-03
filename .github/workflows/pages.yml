@@ -28,12 +28,15 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+      - uses: actions/configure-pages@v5
+        id: pages
       - run: npm run build
         env:
-          BASE_PATH: /dsh-mojobox/
-      - uses: actions/configure-pages@v5
+          BASE_PATH: ${{ steps.pages.outputs.base_path }}/
       - name: 发布前校验归档
         run: npm run verify:downloads
+        env:
+          BASE_PATH: ${{ steps.pages.outputs.base_path }}/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
