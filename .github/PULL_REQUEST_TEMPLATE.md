@@ -30,7 +30,7 @@
 - [ ] `npm run build`
 - [ ] `npm run verify:downloads`
 - [ ] `npm run build:demo` 与 `npm run verify:downloads -- dist-demo --allow-demo`（框架或网站改动）
-- [ ] `BASE_PATH=/dsh-mojobox/ npm run build`（网站改动）
+- [ ] `BASE_PATH=/EAC-mojobox/ npm run build` 与相同 `BASE_PATH` 的下载检查（网站改动）
 - [ ] `git diff --check`
 
 实际命令与结果：

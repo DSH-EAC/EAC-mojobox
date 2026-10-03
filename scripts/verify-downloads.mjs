@@ -4,7 +4,19 @@ import { fileURLToPath } from 'node:url'
 import { inspectFeaturePack } from './feature-pack.mjs'
 import { verifySkinPromptCatalog } from './skin-prompt-package.mjs'
 
-export async function verifyDownloads(directory, { allowDemo = false } = {}) {
+export async function verifyDownloads(directory, { allowDemo = false, basePath } = {}) {
+  if (basePath !== undefined) {
+    if (!basePath.startsWith('/') || !basePath.endsWith('/')) throw new Error('Expected absolute deployment base path with trailing slash')
+    const html = await readFile(join(directory, 'index.html'), 'utf8')
+    // Vite emits double-quoted script and link URLs in the built entry page.
+    const resources = [...html.matchAll(/<(?:script|link)\b[^>]*?\b(?:src|href)="([^"]+)"/g)].map(match => match[1])
+    if (!resources.some(resource => resource.endsWith('.js'))) throw new Error('Missing site entry script')
+    for (const resource of resources) {
+      const url = new URL(resource, 'https://mojobox.invalid')
+      if (url.origin !== 'https://mojobox.invalid' || !url.pathname.startsWith(basePath)) throw new Error(`Site resource outside deployment base: ${resource}`)
+      await readFile(join(directory, url.pathname.slice(basePath.length)))
+    }
+  }
   const catalog = JSON.parse(await readFile(join(directory, 'generated/catalog.json'), 'utf8'))
   if (catalog.mode !== 'intake' || !Array.isArray(catalog.packs)) throw new Error('Expected intake catalog')
   if (catalog.demo && !allowDemo) throw new Error('Test demo cannot be published')
@@ -37,5 +49,5 @@ export async function verifyDownloads(directory, { allowDemo = false } = {}) {
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const args = process.argv.slice(2)
   if (args.length > 2 || (args[1] && args[1] !== '--allow-demo')) throw new Error('Usage: npm run verify:downloads -- [dist] [--allow-demo]')
-  console.log(await verifyDownloads(resolve(args[0] || 'dist'), { allowDemo: args[1] === '--allow-demo' }))
+  console.log(await verifyDownloads(resolve(args[0] || 'dist'), { allowDemo: args[1] === '--allow-demo', basePath: process.env.BASE_PATH || '/' }))
 }

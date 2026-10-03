@@ -128,6 +128,18 @@ test('contributed archive is copied byte-for-byte; mismatch fails before replaci
   assert.deepEqual(await buildCatalog(root), result)
   const publicDir = join(root, 'site/public')
   assert.deepEqual(await verifyDownloads(publicDir), { verified: 1, skinPackages: 0 })
+  await mkdir(join(publicDir, 'assets'))
+  await writeFile(join(publicDir, 'assets/site.js'), 'export {}')
+  await writeFile(join(publicDir, 'assets/site.css'), 'body {}')
+  const entryHtml = base => `<script type="module" src="${base}assets/site.js"></script><link rel="stylesheet" href="${base}assets/site.css">`
+  await writeFile(join(publicDir, 'index.html'), entryHtml('/dsh-mojobox/'))
+  await assert.rejects(verifyDownloads(publicDir, { basePath: '/EAC-mojobox/' }), /outside deployment base/)
+  for (const basePath of ['/', '/EAC-mojobox/']) {
+    await writeFile(join(publicDir, 'index.html'), entryHtml(basePath))
+    assert.deepEqual(await verifyDownloads(publicDir, { basePath }), { verified: 1, skinPackages: 0 })
+  }
+  await rm(join(publicDir, 'assets/site.js'))
+  await assert.rejects(verifyDownloads(publicDir, { basePath: '/EAC-mojobox/' }), { code: 'ENOENT' })
   const catalogPath = join(publicDir, 'generated/catalog.json')
   const changed = structuredClone(result)
   changed.packs[0].components[0].version = '9.9.9'

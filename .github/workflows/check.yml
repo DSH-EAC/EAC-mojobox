@@ -11,6 +11,8 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
+    env:
+      BASE_PATH: /${{ github.event.repository.name }}/
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -22,8 +24,6 @@ jobs:
         run: node authoring/build.mjs --check
       - run: npm test
       - run: npm run build
-        env:
-          BASE_PATH: /dsh-mojobox/
       - name: 独立读取并校验下载归档
         run: npm run verify:downloads
       - run: npm run build:demo
