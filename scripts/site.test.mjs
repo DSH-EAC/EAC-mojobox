@@ -135,10 +135,11 @@ test('intake groups appearance archives and prompt material under skins and coun
   assert.match(site.app.innerHTML, /data-select="dev.example.skin"/)
   assert.match(site.app.innerHTML, /data-select="maid-atelier"/)
   assert.doesNotMatch(site.app.innerHTML, /data-select="dev.aio.function"|外观包/)
-  assert.ok(site.app.innerHTML.includes(`href="/${skinArchive.archiveUrl}" download`))
-  assert.ok(site.app.innerHTML.includes(`href="/${skinPackage.promptUrl}" download`))
-  assert.match(site.app.innerHTML, /下载皮肤包/)
-  assert.match(site.app.innerHTML, /不可直接安装/)
+  assert.match(site.app.innerHTML, /skin-gallery/)
+  assert.match(site.app.innerHTML, /href="#\/skins\/dev.example.skin"/)
+  assert.match(site.app.innerHTML, /href="#\/skins\/maid-atelier"/)
+  assert.match(site.app.innerHTML, /皮肤归档 · 宿主未测试/)
+  assert.match(site.app.innerHTML, /设计资料 · 浅色、深色主题/)
 })
 
 test('skin search covers both formats without inheriting functional category filters', () => {
@@ -229,6 +230,27 @@ test('prompt details distinguish original projects from fixed prompt provenance 
   assert.match(html, /<dd>浅色、深色<\/dd>/)
   assert.doesNotMatch(html, /<span class="tag">maid<\/span>|<dd>light、dark<\/dd>/)
   assert.match(site.run('skinRow(catalog.skinPackages[0])'), /浅色、深色主题/)
+})
+
+test('skin gallery uses verified covers from both formats and handles missing or unsafe URLs', () => {
+  const data = structuredClone(mixedIntake)
+  data.skinPackages[0].origin = { previews: [
+    { url: 'javascript:alert(1)' }, { url: 'https://example.org/light.webp' }
+  ] }
+  const site = loadSite('/', data)
+  const archive = site.run('skinRow(catalog.packs[1])')
+  assert.match(archive, /src="https:\/\/example.org\/preview.png"/)
+  const prompt = site.run('skinRow(catalog.skinPackages[0])')
+  assert.match(prompt, /src="https:\/\/example.org\/light.webp"/)
+  assert.match(prompt, /Abyssal Maid Atelier/)
+  assert.ok(prompt.indexOf('<img') < prompt.indexOf('skin-card-name'))
+  assert.doesNotMatch(prompt, /javascript:|generated\/downloads|download/)
+  site.run('catalog.skinPackages[0].origin.previews = [{ url: "data:text/html,unsafe" }]; catalog.skinPackages[0].metadata.name = "<script>unsafe</script>"')
+  const missing = site.run('skinRow(catalog.skinPackages[0])')
+  assert.match(missing, /skin-cover preview-unavailable/)
+  assert.match(missing, /暂无预览/)
+  assert.match(missing, /&lt;script&gt;unsafe&lt;\/script&gt;/)
+  assert.doesNotMatch(missing, /<img|data:text|<script>/)
 })
 
 for (const base of ['/', '/dsh-mojobox/']) {
