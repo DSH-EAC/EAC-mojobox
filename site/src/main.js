@@ -12,6 +12,7 @@ import {
   FileJson,
   FileText,
   Filter,
+  Image,
   Info,
   PackageCheck,
   Search,
@@ -35,6 +36,7 @@ const iconSet = {
   FileJson,
   FileText,
   Filter,
+  Image,
   Info,
   PackageCheck,
   Search,
@@ -234,18 +236,25 @@ function packRow(pack) {
 }
 
 function skinRow(pack) {
-  if (pack.format === 'eac-feature-pack-v1') return packRow(pack)
+  const isArchive = pack.format === 'eac-feature-pack-v1'
+  const previews = isArchive ? pack.appearance?.previews : pack.origin?.previews
+  const previewUrl = (Array.isArray(previews) ? previews : []).map(preview => safeExternalUrl(typeof preview === 'string' ? preview : preview?.url)).find(url => url !== '#')
+  const subtitle = pack.metadata.nameEn || pack.author || '未声明作者'
+  const scope = isArchive ? '皮肤归档 · 宿主未测试' : `设计资料 · ${formatThemes(pack.themes)}主题`
   return `
-    <article class="pack-card ${state.selected === pack.metadata.id ? 'is-selected' : ''}">
-      <button class="pack-select" data-select="${escapeHtml(pack.metadata.id)}" aria-pressed="${state.selected === pack.metadata.id}" type="button">
-        <span class="card-topline"><span class="item-mark pack-mark"><i data-lucide="file-json"></i></span><span class="badge badge-lock">AI 皮肤资料</span></span>
-        <strong class="card-title">${escapeHtml(pack.metadata.name)}</strong>
-        <span class="card-author">${escapeHtml(pack.author)} · ${escapeHtml(formatThemes(pack.themes))}主题</span>
-        <span class="card-description">${escapeHtml(pack.metadata.description || '未提供皮肤说明。')}</span>
-        <span class="card-status"><span class="badge badge-parsed">来源已固定</span><span class="badge badge-warning">不可直接安装</span></span>
-        <span class="card-inspect">查看详情 <i data-lucide="arrow-up-right"></i></span>
-      </button>
-      <div class="card-actions"><a href="${assetUrl(pack.promptUrl)}" download><i data-lucide="download"></i>下载 Prompt</a><a href="${assetUrl(pack.manifestUrl)}" download>清单 <i data-lucide="file-json"></i></a></div>
+    <article class="skin-card">
+      <a class="skin-select" href="#/skins/${encodeURIComponent(pack.metadata.id)}" data-select="${escapeHtml(pack.metadata.id)}" aria-label="查看${escapeHtml(pack.metadata.name)}详情">
+        <span class="skin-cover${previewUrl ? '' : ' preview-unavailable'}">
+          ${previewUrl ? `<img src="${escapeHtml(previewUrl)}" alt="${escapeHtml(pack.metadata.name)}预览" loading="lazy" decoding="async" referrerpolicy="no-referrer" />` : ''}
+          <span class="skin-cover-empty"><i data-lucide="image"></i><span>${previewUrl ? '预览暂不可用' : '暂无预览'}</span></span>
+          <span class="skin-cover-info" title="${escapeHtml(isArchive ? '皮肤归档：结构已检验，宿主未测试。' : 'AI 设计资料：不可直接安装。上游预览可能与历史 Prompt 不同。')}"><i data-lucide="info"></i></span>
+        </span>
+        <span class="skin-card-copy">
+          <strong class="skin-card-name" title="${escapeHtml(pack.metadata.name)}">${escapeHtml(pack.metadata.name)}</strong>
+          <span class="skin-card-subtitle" title="${escapeHtml(subtitle)}">${escapeHtml(subtitle)}</span>
+          <span class="skin-card-scope">${escapeHtml(scope)}</span>
+        </span>
+      </a>
     </article>`
 }
 
@@ -522,7 +531,7 @@ function renderIntake() {
       <main class="catalog-page ${isDetail || isMissingDetail ? 'is-detail' : ''}" aria-label="${currentLabel}目录">
         ${isDetail || isMissingDetail ? `<section class="detail-page"><a class="back-link" href="#/${state.tab}" data-tab="${state.tab}"><i data-lucide="arrow-up-right"></i>返回${currentLabel}列表</a><div class="detail-page-body" id="detail">${isDetail ? (state.tab === 'skins' ? skinDetail(selected) : intakeDetail(selected)) : `<div class="detail-empty"><i data-lucide="box"></i><h2>未找到此${currentLabel}</h2><p>未找到此整合包。当前暂无正式收录内容，链接对应的内容不在当前目录中，请返回列表选择其他项目。</p></div>`}</div></section>` : `<section class="catalog-intro"><div><span class="eyebrow">${state.tab === 'skins' ? 'APPEARANCE COLLECTION' : 'FEATURE COLLECTION'}</span><h1>${currentLabel}</h1><p>${state.tab === 'skins' ? '收纳皮肤归档、设计 Prompt 和来源信息，保留各自的下载文件与检查范围。' : '收纳经过结构检查的功能整合包，为宿主和下游工具提供明确的原始来源。'}</p></div><div class="catalog-count"><strong>${items.length}</strong><span>当前显示</span></div></section>
         <section class="catalog-toolbar" aria-label="目录搜索和筛选"><label class="search-field"><i data-lucide="search"></i><input type="search" value="${escapeHtml(state.query)}" placeholder="搜索名称、ID 或包说明" aria-label="搜索${currentLabel}" /></label>${state.tab === 'packs' ? `<label class="catalog-filter"><span>分类</span><select id="category-filter"><option value="all">全部功能包</option>${categoryOptions}</select></label>` : '<span class="catalog-hint"><i data-lucide="info"></i>皮肤包按来源、主题和目标界面整理</span>'}</section>
-        <div class="catalog-grid ${items.length ? '' : 'is-empty'}">${items.length ? items.map(item => state.tab === 'skins' ? skinRow(item) : packRow(item)).join('') : `<div class="no-results">${emptyState(state.tab === 'skins' ? skins.length : packs.length, currentLabel)}</div>`}</div>`}
+        <div class="catalog-grid ${state.tab === 'skins' ? 'skin-gallery' : ''} ${items.length ? '' : 'is-empty'}">${items.length ? items.map(item => state.tab === 'skins' ? skinRow(item) : packRow(item)).join('') : `<div class="no-results">${emptyState(state.tab === 'skins' ? skins.length : packs.length, currentLabel)}</div>`}</div>`}
       </main>`}
     <footer class="site-footer"><span>Mojobox · 为 DSH 生态收纳好工具</span><span>由开发者维护内容 · 安装与运行交给宿主</span></footer>`
   bindEvents()
@@ -594,10 +603,14 @@ function selectItem(id, tab = state.tab) {
 }
 
 function bindEvents() {
-  document.querySelectorAll('.detail-previews img').forEach(image => image.addEventListener('error', () => {
-    image.hidden = true
-    image.closest('figure').classList.add('preview-unavailable')
-  }))
+  document.querySelectorAll('.detail-previews img, .skin-cover img').forEach(image => {
+    const showUnavailable = () => {
+      image.hidden = true
+      image.closest('figure, .skin-cover').classList.add('preview-unavailable')
+    }
+    image.addEventListener('error', showUnavailable)
+    if (image.complete && !image.naturalWidth) showUnavailable()
+  })
   document.querySelectorAll('[data-tab]').forEach(button => button.addEventListener('click', () => {
     state.tab = button.dataset.tab
     state.selected = null
