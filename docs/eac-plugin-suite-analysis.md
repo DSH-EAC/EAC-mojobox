@@ -1,6 +1,6 @@
 # EAC/AIO 整合包解析与收录判断
 
-复核日期：2026-10-01。事实源是 [v0.1.7 发布成品](https://github.com/zouyuxuan122/EAC-Plugin-Integration-Pack/releases/tag/v0.1.7)
+复核日期：2026-10-01。事实源是 [v0.1.7 发布成品](https://github.com/Ebony-Vinyl/EAC-Plugin-Integration-Pack/releases/tag/v0.1.7)
 及提交 `58d020813bb565f7888b6f0b539ec0711733a519`。清单、组件摘要和包元数据已保存到
 [`candidates/integration-suites/dsh-plugin-suite-0.1.7/`](../candidates/integration-suites/dsh-plugin-suite-0.1.7/README.md)。
 

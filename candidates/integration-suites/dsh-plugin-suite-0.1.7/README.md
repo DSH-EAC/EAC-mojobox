@@ -1,6 +1,6 @@
 # EAC/AIO 完整整合包来源候选
 
-来源：[EAC-Plugin-Integration-Pack v0.1.7](https://github.com/zouyuxuan122/EAC-Plugin-Integration-Pack/releases/tag/v0.1.7)。
+来源：[EAC-Plugin-Integration-Pack v0.1.7](https://github.com/Ebony-Vinyl/EAC-Plugin-Integration-Pack/releases/tag/v0.1.7)。
 固定提交 `58d020813bb565f7888b6f0b539ec0711733a519`；复核日期 2026-10-01。
 
 当前收纳的是元数据、组件清单和选型资料，状态为 `source-only`。它不是正式 Feature Pack 收录，

@@ -2,15 +2,15 @@
   "name": "dsh-plugin-suite",
   "version": "0.1.7",
   "status": "source-only",
-  "repository": "https://github.com/zouyuxuan122/EAC-Plugin-Integration-Pack",
+  "repository": "https://github.com/Ebony-Vinyl/EAC-Plugin-Integration-Pack",
   "tag": "v0.1.7",
   "revision": "58d020813bb565f7888b6f0b539ec0711733a519",
-  "release": "https://github.com/zouyuxuan122/EAC-Plugin-Integration-Pack/releases/tag/v0.1.7",
+  "release": "https://github.com/Ebony-Vinyl/EAC-Plugin-Integration-Pack/releases/tag/v0.1.7",
   "reviewedAt": "2026-10-01",
   "artifact": {
     "format": "npm-tarball",
     "filename": "dsh-plugin-suite-0.1.7.tgz",
-    "url": "https://github.com/zouyuxuan122/EAC-Plugin-Integration-Pack/releases/download/v0.1.7/dsh-plugin-suite-0.1.7.tgz",
+    "url": "https://github.com/Ebony-Vinyl/EAC-Plugin-Integration-Pack/releases/download/v0.1.7/dsh-plugin-suite-0.1.7.tgz",
     "size": 125909484,
     "sha256": "0799789791b02b2ee319c4e599789cf0b61a9c35f26bfa1dea6112cf53baebfc",
     "verification": "downloaded-and-hashed",
@@ -71,7 +71,7 @@
     "nextStep": "Support upstream release references as a separate intake type; preserve original bytes, metadata and license limitations without translating or repacking the suite."
   },
   "upstreamRuntimeReport": {
-    "url": "https://github.com/zouyuxuan122/EAC-Plugin-Integration-Pack/blob/58d020813bb565f7888b6f0b539ec0711733a519/reports/D9-final-test-report.md",
+    "url": "https://github.com/Ebony-Vinyl/EAC-Plugin-Integration-Pack/blob/58d020813bb565f7888b6f0b539ec0711733a519/reports/D9-final-test-report.md",
     "suiteVersion": "0.1.6",
     "dsh": "0.2.0-rc.2",
     "basis": "upstream-report-only"

@@ -1,7 +1,7 @@
 # EAC/AIO 减重与分类组合
 
 复核日期：2026-10-03。目标内核为官方 DSH `0.2.0-rc.2`。来源是
-[EAC/AIO v0.1.7](https://github.com/zouyuxuan122/EAC-Plugin-Integration-Pack/releases/tag/v0.1.7)
+[EAC/AIO v0.1.7](https://github.com/Ebony-Vinyl/EAC-Plugin-Integration-Pack/releases/tag/v0.1.7)
 的 69 个实际内嵌组件，以及各组件的公开发布源。
 
 本轮交付自制 Feature Pack v1 薄 `.dshpack`，由 DSH-EAC 维护组合、上游维护插件。
