@@ -1,4 +1,6 @@
-# DSH Mojobox
+<h1 align="center">
+  <img src="docs/assets/EAC-mojobox.svg" alt="DSH Mojobox" width="808" />
+</h1>
 
 DSH 生态的插件与整合包收录、验证、归档和分发目录。
 
