@@ -22,6 +22,7 @@
 - [架构与扩展边界](architecture.md)：职责边界，历史 Pack/Lock 设计已明确标记。
 - [宿主接入核对](host-adapter.md)、[legacy Pack/Lock 格式](pack-format.md)：维护已有历史实现，不扩展为当前收录协议。
 - [框架验收记录](framework-acceptance.md)：固定日期的框架验证，不代替今天重新运行测试。
+- [插件目录与来源接口验收](plugin-catalog-acceptance-20261010.md)：本轮构建、HTTP 与桌面/窄屏检查，以及已知限制。
 
 ## 来源与选型
 
