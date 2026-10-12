@@ -47,7 +47,8 @@ const iconSet = {
 const app = document.querySelector('#app')
 const base = import.meta.env.BASE_URL
 const levelOrder = ['Declared', 'Parsed', 'Negotiated', 'Tested', 'Observed', 'Attested']
-const state = { tab: 'plugins', query: '', availability: 'all', evidence: 'all', host: 'all', category: 'all', selected: null }
+const searchDefaults = { query: '', availability: 'all', category: 'all', tag: 'all', kind: 'all', sort: 'relevance' }
+const state = { tab: 'plugins', ...searchDefaults, evidence: 'all', host: 'all', selected: null }
 let catalog
 
 const categoryLabels = {
@@ -78,6 +79,8 @@ const tagLabels = {
   'project-memory': '项目记忆', 'theme-endfield': '终末地主题', 'meow-smooth': '平滑滚动',
   'open-sea-skin': '开放海洋主题'
 }
+
+const kindLabels = { archive: '皮肤 / 外观归档', prompt: 'Prompt 资料' }
 
 function tagLabel(tag) {
   const key = String(tag).toLowerCase()
@@ -179,12 +182,92 @@ function intakeCollections() {
   }
 }
 
+const normalizeSearch = value => String(value ?? '').normalize('NFKC').toLowerCase().replace(/\s+/g, ' ').trim()
+
+function searchFields(item) {
+  const metadata = item.metadata || item
+  const tags = item.metadata ? contentTags(item) : []
+  return [
+    [metadata.name, metadata.nameEn, metadata.id, item.packageName].filter(Boolean).join(' '),
+    [...tags, ...tags.map(tagLabel), categoryLabels[metadata.category]].filter(Boolean).join(' '),
+    [metadata.description, metadata.introduction, item.summary].filter(Boolean).join(' '),
+    [item.author, typeof item.source === 'string' ? item.source : item.source?.url,
+      item.source?.repository, ...(item.components || []).map(component => component.ref || component.id),
+      ...(item.limitations || []), ...(item.conflicts || []), item.appearance?.loader?.id,
+      ...(item.appearance?.skinIds || []), ...(item.appearance?.conflicts || []),
+      item.appearance?.notes, item.themes?.length ? formatThemes(item.themes) : '',
+      item.metadata?.category === 'appearance' ? kindLabels[item.format === 'eac-feature-pack-v1' ? 'archive' : 'prompt'] : ''
+    ].filter(Boolean).join(' ')
+  ].map(normalizeSearch)
+}
+
+function searchScore(item, query) {
+  const terms = [...new Set(normalizeSearch(query).split(' ').filter(Boolean))]
+  const fields = searchFields(item)
+  const weights = [8, 4, 2, 1]
+  let score = 0
+  for (const term of terms) {
+    const field = fields.findIndex(text => text.includes(term))
+    if (field === -1) return -1
+    score += weights[field]
+  }
+  const name = normalizeSearch(item.metadata?.name || item.name)
+  if (terms.length && name === normalizeSearch(query)) score += 16
+  return score
+}
+
+function filterIntakeItems(items) {
+  return items.map(item => ({ item, score: searchScore(item, state.query) })).filter(({ item, score }) => {
+    const isPrompt = item.format !== 'eac-feature-pack-v1'
+    return score >= 0 &&
+      (state.availability === 'all' || (state.availability === 'published') === Boolean(item.archiveUrl)) &&
+      (state.tab !== 'packs' || state.category === 'all' || item.metadata.category === state.category) &&
+      (state.tag === 'all' || (item.metadata && contentTags(item).includes(state.tag))) &&
+      (state.tab !== 'skins' || state.kind === 'all' || (state.kind === 'prompt') === isPrompt)
+  }).sort((a, b) => {
+    if (state.sort === 'relevance' && a.score !== b.score) return b.score - a.score
+    const aName = a.item.metadata?.name || a.item.name
+    const bName = b.item.metadata?.name || b.item.name
+    return aName.localeCompare(bName, 'zh-CN', { numeric: true }) ||
+      (a.item.metadata?.id || a.item.id).localeCompare(b.item.metadata?.id || b.item.id)
+  }).map(({ item }) => item)
+}
+
+function catalogHash(tab = state.tab, id = state.selected) {
+  const params = new URLSearchParams()
+  if (catalog.mode === 'intake' && ['plugins', 'packs', 'skins'].includes(tab) && tab === state.tab) {
+    for (const [key, fallback] of Object.entries(searchDefaults)) {
+      if (state[key] !== fallback) params.set(key === 'query' ? 'q' : key, state[key])
+    }
+  }
+  return `#/${tab}${id ? `/${encodeURIComponent(id)}` : ''}${params.size ? `?${params}` : ''}`
+}
+
+function renderSearchTools(items) {
+  const select = (id, label, value, options) => `<label class="catalog-filter"><span>${label}</span><select id="${id}">${options.map(([key, text]) => `<option value="${escapeHtml(key)}" ${value === key ? 'selected' : ''}>${escapeHtml(text)}</option>`).join('')}</select></label>`
+  const tags = [...new Set([...items.flatMap(item => item.metadata ? contentTags(item) : []), ...(state.tag !== 'all' ? [state.tag] : [])])]
+    .sort((a, b) => tagLabel(a).localeCompare(tagLabel(b), 'zh-CN'))
+  const categories = Object.entries(categoryLabels).filter(([key]) => items.some(item => item.metadata?.category === key) || state.category === key)
+  return `<section class="catalog-toolbar" aria-label="目录搜索和筛选">
+    <label class="search-field"><i data-lucide="search"></i><input id="catalog-search" type="search" value="${escapeHtml(state.query)}" placeholder="搜索名称、作者、用途或组件" aria-label="搜索${{ plugins: '插件', packs: '功能包', skins: '皮肤包' }[state.tab]}" /></label>
+    <div class="catalog-filter-row">
+      ${state.tab === 'packs' ? select('category-filter', '分类', state.category, [['all', '全部分类'], ...categories]) : ''}
+      ${state.tab === 'skins' ? select('kind-filter', '资源形态', state.kind, [['all', '全部形态'], ...Object.entries(kindLabels)]) : ''}
+      ${tags.length ? select('tag-filter', state.tab === 'packs' ? '标签 / 组件' : '风格 / 标签', state.tag, [['all', '全部标签'], ...tags.map(tag => [tag, tagLabel(tag)])]) : ''}
+      ${state.tab === 'plugins' ? select('availability', '下载状态', state.availability, [['all', '全部插件'], ['published', '有核验归档'], ['unpublished', '仅来源收录']]) : ''}
+      ${select('sort-filter', '排序', state.sort, [['relevance', '相关性'], ['name', '名称']])}
+      <button class="command" type="button" data-reset-search>清空条件</button>
+    </div>
+  </section><p class="catalog-search-note">空格分隔多个关键词，所有关键词均需匹配；名称优先匹配。${state.tab === 'packs' ? '未声明标签的包可按所含组件筛选。' : state.tab === 'skins' ? '归档与 Prompt 资料分开筛选，资料不代表可安装皮肤。' : '支持中文名称、包名、作者与来源检索。'}</p>`
+}
+
 function filteredItems() {
   const query = state.query.trim().toLowerCase()
+  if (catalog.mode === 'intake') {
+    const { packs, skins } = intakeCollections()
+    return filterIntakeItems({ plugins: catalog.plugins, packs, skins }[state.tab] || [])
+  }
   if (state.tab === 'plugins') {
-    if (catalog.mode === 'intake') return catalog.plugins.filter(plugin =>
-      (!query || `${plugin.name} ${plugin.id} ${plugin.packageName} ${plugin.summary} ${(plugin.limitations || []).join(' ')}`.toLowerCase().includes(query)) &&
-      (state.availability === 'all' || (state.availability === 'published') === Boolean(plugin.archiveUrl)))
     return catalog.plugins.filter(plugin => {
       const matchesQuery = !query || `${plugin.name} ${plugin.id}`.toLowerCase().includes(query)
       const matchesAvailability = state.availability === 'all' || (state.availability === 'published') === Boolean(plugin.artifact)
@@ -266,7 +349,7 @@ function skinRow(pack) {
   const scope = isArchive ? '皮肤归档 · 宿主未测试' : `设计资料 · ${formatThemes(pack.themes)}主题`
   return `
     <article class="skin-card">
-      <a class="skin-select" href="#/skins/${encodeURIComponent(pack.metadata.id)}" data-select="${escapeHtml(pack.metadata.id)}" aria-label="查看${escapeHtml(pack.metadata.name)}详情">
+      <a class="skin-select" href="${escapeHtml(catalogHash('skins', pack.metadata.id))}" data-select="${escapeHtml(pack.metadata.id)}" aria-label="查看${escapeHtml(pack.metadata.name)}详情">
         <span class="skin-cover${previewUrl ? '' : ' preview-unavailable'}">
           ${previewUrl ? `<img src="${escapeHtml(previewUrl)}" alt="${escapeHtml(pack.metadata.name)}预览" loading="lazy" decoding="async" referrerpolicy="no-referrer" />` : ''}
           <span class="skin-cover-empty"><i data-lucide="image"></i><span>${previewUrl ? '预览暂不可用' : '暂无预览'}</span></span>
@@ -554,6 +637,7 @@ function sourcePage() {
 
 function renderIntake() {
   const focusedId = document.activeElement?.dataset?.select
+  const focusedControl = document.activeElement?.id
   const { packs, skins } = intakeCollections()
   if (state.tab === 'packs' && skins.some(pack => pack.metadata.id === state.selected)) state.tab = 'skins'
   if (!['home', 'packs', 'skins', 'plugins', 'skills', 'contribute', 'source'].includes(state.tab)) {
@@ -564,16 +648,13 @@ function renderIntake() {
     ? skins.find(pack => pack.metadata.id === state.selected)
     : packs.find(pack => pack.metadata.id === state.selected)
   const totalItems = packs.length + skins.length + catalog.plugins.length
-  const isDetail = Boolean(selected) && !state.query.trim()
-  const isMissingDetail = Boolean(state.selected) && !selected && !state.query.trim()
+  const isDetail = Boolean(selected)
+  const isMissingDetail = Boolean(state.selected) && !selected
   const currentLabel = { skins: '皮肤包', packs: '功能包', plugins: '插件', skills: 'Skill' }[state.tab] || '功能包'
   const collectionSize = { skins: skins.length, packs: packs.length, plugins: catalog.plugins.length, skills: 0 }[state.tab]
   const itemDetail = item => state.tab === 'plugins' ? pluginDetail(item) : state.tab === 'skins' ? skinDetail(item) : intakeDetail(item)
   const itemRow = item => state.tab === 'plugins' ? pluginRow(item) : state.tab === 'skins' ? skinRow(item) : packRow(item)
   const collectionDescription = { skins: '皮肤归档、设计 Prompt 和各自的原始来源。', packs: '经过结构检查的功能组合与原始归档。', plugins: '独立插件的精确版本、发行来源、兼容声明与已知限制。', skills: '暂无收录。宿主格式与供货约定尚待确认。' }[state.tab]
-  const categoryOptions = Object.entries(categoryLabels)
-    .filter(([value]) => packs.some(pack => pack.metadata.category === value))
-    .map(([value, label]) => `<option value="${value}" ${state.category === value ? 'selected' : ''}>${label}</option>`).join('')
   const emptyState = (hasCatalog, title) => hasCatalog
     ? '<i data-lucide="search"></i><strong>没有匹配项</strong><span>调整搜索条件，或清空搜索后查看全部目录。</span>'
     : `<div class="empty-illustration"><i data-lucide="boxes"></i><span></span></div><strong>暂无正式收录内容</strong><span>${title}通过收录检查后会展示在这里。</span><a class="empty-cta" href="https://github.com/DSH-EAC/dsh-mojobox/blob/main/docs/${state.tab === 'plugins' ? 'plugin-intake' : 'intake'}.md" target="_blank" rel="noreferrer">查看收录规范 <i data-lucide="arrow-up-right"></i></a>`
@@ -600,14 +681,15 @@ function renderIntake() {
         <section class="principles"><div><span class="eyebrow">MOJOBOX ROLE</span><h2>让上游内容更容易被找到</h2></div><div class="principle-list"><div><i data-lucide="archive"></i><span><strong>收纳</strong><small>保存开发者提供的原始归档和资料。</small></span></div><div><i data-lucide="shield-check"></i><span><strong>检验</strong><small>检查结构、摘要和来源记录，不替作者维护内容。</small></span></div><div><i data-lucide="download"></i><span><strong>供给</strong><small>为宿主、加载器和下游工具提供可靠下载来源。</small></span></div></div></section>
       </main>` : `
       <main class="catalog-page ${isDetail || isMissingDetail ? 'is-detail' : ''}" aria-label="${currentLabel}目录">
-        ${isDetail || isMissingDetail ? `<section class="detail-page"><a class="back-link" href="#/${state.tab}" data-tab="${state.tab}"><i data-lucide="arrow-up-right"></i>返回${currentLabel}列表</a><div class="detail-page-body" id="detail">${isDetail ? itemDetail(selected) : `<div class="detail-empty"><i data-lucide="box"></i><h2>未找到此${currentLabel}</h2><p>${state.tab === 'packs' ? '未找到此整合包。' : ''}当前暂无正式收录的此条目，请返回列表选择其他项目。</p></div>`}</div></section>` : `<section class="catalog-intro"><div><span class="eyebrow">${{ skins: 'APPEARANCE COLLECTION', packs: 'FEATURE COLLECTION', plugins: 'PLUGIN COLLECTION', skills: 'SKILL COLLECTION' }[state.tab]}</span><h1>${currentLabel}</h1><p>${collectionDescription}</p></div><div class="catalog-count"><strong>${items.length}</strong><span>当前显示</span></div></section>
-        ${state.tab !== 'skills' ? `<nav class="guide-tabs" aria-label="本类提交规范">${(state.tab === 'skins' ? ['skin', 'prompt'] : [state.tab === 'plugins' ? 'plugin' : 'pack']).map(type => `<a class="command" href="#/contribute/${type}">提交${submissionTypes[type]}</a>`).join('')}</nav><section class="catalog-toolbar" aria-label="目录搜索和筛选"><label class="search-field"><i data-lucide="search"></i><input type="search" value="${escapeHtml(state.query)}" placeholder="搜索名称、ID 或包说明" aria-label="搜索${currentLabel}" /></label>${state.tab === 'packs' ? `<label class="catalog-filter"><span>分类</span><select id="category-filter"><option value="all">全部功能包</option>${categoryOptions}</select></label>` : state.tab === 'plugins' ? `<label class="catalog-filter"><span>下载状态</span><select id="availability"><option value="all">全部插件</option><option value="published" ${state.availability === 'published' ? 'selected' : ''}>已核验下载</option><option value="unpublished" ${state.availability === 'unpublished' ? 'selected' : ''}>仅来源收录</option></select></label>` : '<span class="catalog-hint"><i data-lucide="info"></i>皮肤包按来源、主题和目标界面整理</span>'}</section>` : ''}
+        ${isDetail || isMissingDetail ? `<section class="detail-page"><a class="back-link" href="${escapeHtml(catalogHash(state.tab, null))}" data-tab="${state.tab}"><i data-lucide="arrow-up-right"></i>返回${currentLabel}列表</a><div class="detail-page-body" id="detail">${isDetail ? itemDetail(selected) : `<div class="detail-empty"><i data-lucide="box"></i><h2>未找到此${currentLabel}</h2><p>${state.tab === 'packs' ? '未找到此整合包。' : ''}当前暂无正式收录的此条目，请返回列表选择其他项目。</p></div>`}</div></section>` : `<section class="catalog-intro"><div><span class="eyebrow">${{ skins: 'APPEARANCE COLLECTION', packs: 'FEATURE COLLECTION', plugins: 'PLUGIN COLLECTION', skills: 'SKILL COLLECTION' }[state.tab]}</span><h1>${currentLabel}</h1><p>${collectionDescription}</p></div><div class="catalog-count" role="status" aria-live="polite"><strong>${items.length}</strong><span>当前显示 / 共 ${collectionSize} 项</span></div></section>
+        ${state.tab !== 'skills' ? `<nav class="guide-tabs" aria-label="本类提交规范">${(state.tab === 'skins' ? ['skin', 'prompt'] : [state.tab === 'plugins' ? 'plugin' : 'pack']).map(type => `<a class="command" href="#/contribute/${type}">提交${submissionTypes[type]}</a>`).join('')}</nav>${renderSearchTools({ plugins: catalog.plugins, packs, skins }[state.tab] || [])}` : ''}
         <div class="catalog-grid ${state.tab === 'skins' ? 'skin-gallery' : ''} ${items.length ? '' : 'is-empty'}">${items.length ? items.map(itemRow).join('') : `<div class="no-results">${state.tab === 'skills' ? '<i data-lucide="file-text"></i><strong>暂无 Skill 收录</strong><span>暂不提供 Skill 下载或安装。</span>' : emptyState(collectionSize, currentLabel)}</div>`}</div>`}
       </main>`}
     <footer class="site-footer"><span>Mojobox · 为 DSH 生态收纳好工具</span><span>由开发者维护内容 · 安装与运行交给宿主</span></footer>`
   bindEvents()
   refreshIcons()
   if (focusedId) [...document.querySelectorAll('[data-select]')].find(button => button.dataset.select === focusedId)?.focus()
+  if (focusedControl) document.getElementById(focusedControl)?.focus()
 }
 
 function selectedDetail() {
@@ -666,9 +748,10 @@ function render() {
 }
 
 function selectItem(id, tab = state.tab) {
+  if (state.tab !== tab) Object.assign(state, searchDefaults)
   state.tab = tab
   state.selected = id
-  location.hash = `#/${tab}/${encodeURIComponent(id)}`
+  location.hash = catalogHash()
   render()
   if (window.innerWidth < 1100) document.querySelector('#detail')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
@@ -682,10 +765,13 @@ function bindEvents() {
     image.addEventListener('error', showUnavailable)
     if (image.complete && !image.naturalWidth) showUnavailable()
   })
-  document.querySelectorAll('[data-tab]').forEach(button => button.addEventListener('click', () => {
+  document.querySelectorAll('[data-tab]').forEach(button => button.addEventListener('click', event => {
+    if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return
+    event.preventDefault()
+    if (state.tab !== button.dataset.tab || !button.classList.contains('back-link')) Object.assign(state, searchDefaults)
     state.tab = button.dataset.tab
     state.selected = null
-    location.hash = `#/${state.tab}`
+    location.hash = catalogHash()
     render()
   }))
   const search = document.querySelector('.search-field input')
@@ -693,6 +779,7 @@ function bindEvents() {
     state.query = event.target.value
     if (event.isComposing) return
     const caret = event.target.selectionStart
+    if (catalog.mode === 'intake') history.replaceState(null, '', catalogHash())
     render()
     const input = document.querySelector('.search-field input')
     input?.focus()
@@ -700,11 +787,29 @@ function bindEvents() {
   }
   search?.addEventListener('input', updateSearch)
   search?.addEventListener('compositionend', updateSearch)
-  document.querySelector('#availability')?.addEventListener('change', event => { state.availability = event.target.value; render() })
+  const changeFilter = (key, value) => {
+    state[key] = value
+    if (catalog.mode === 'intake') location.hash = catalogHash()
+    render()
+  }
+  document.querySelector('#availability')?.addEventListener('change', event => changeFilter('availability', event.target.value))
   document.querySelector('#evidence-filter')?.addEventListener('change', event => { state.evidence = event.target.value; render() })
   document.querySelector('#host-filter')?.addEventListener('change', event => { state.host = event.target.value; render() })
-  document.querySelector('#category-filter')?.addEventListener('change', event => { state.category = event.target.value; render() })
-  document.querySelectorAll('[data-select]').forEach(button => button.addEventListener('click', () => selectItem(button.dataset.select)))
+  document.querySelector('#category-filter')?.addEventListener('change', event => changeFilter('category', event.target.value))
+  document.querySelector('#tag-filter')?.addEventListener('change', event => changeFilter('tag', event.target.value))
+  document.querySelector('#kind-filter')?.addEventListener('change', event => changeFilter('kind', event.target.value))
+  document.querySelector('#sort-filter')?.addEventListener('change', event => changeFilter('sort', event.target.value))
+  document.querySelector('[data-reset-search]')?.addEventListener('click', () => {
+    Object.assign(state, searchDefaults)
+    location.hash = catalogHash()
+    render()
+    document.querySelector('.search-field input')?.focus()
+  })
+  document.querySelectorAll('[data-select]').forEach(button => button.addEventListener('click', event => {
+    if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return
+    event.preventDefault()
+    selectItem(button.dataset.select)
+  }))
   document.querySelectorAll('[data-open-plugin]').forEach(button => button.addEventListener('click', () => selectItem(button.dataset.openPlugin, 'plugins')))
   document.querySelectorAll('[data-copy]').forEach(button => button.addEventListener('click', async () => {
     try {
@@ -721,10 +826,23 @@ function bindEvents() {
 }
 
 function applyHash() {
-  const [, tab, encodedId] = location.hash.match(/^#\/(home|plugins|packs|skins|skills|contribute|source)(?:\/(.+))?$/) || []
+  const separator = location.hash.indexOf('?')
+  const path = separator === -1 ? location.hash : location.hash.slice(0, separator)
+  const search = separator === -1 ? '' : location.hash.slice(separator + 1)
+  const [, tab, encodedId] = path.match(/^#\/(home|plugins|packs|skins|skills|contribute|source)(?:\/(.+))?$/) || []
   if (tab) state.tab = tab
   try { state.selected = encodedId ? decodeURIComponent(encodedId) : null }
   catch { state.selected = null }
+  if (catalog.mode !== 'intake') return
+  Object.assign(state, searchDefaults)
+  if (!['plugins', 'packs', 'skins'].includes(state.tab)) return
+  const params = new URLSearchParams(search)
+  state.query = params.get('q') || ''
+  if (['relevance', 'name'].includes(params.get('sort'))) state.sort = params.get('sort')
+  if (state.tab === 'plugins' && ['published', 'unpublished'].includes(params.get('availability'))) state.availability = params.get('availability')
+  if (state.tab === 'packs' && Object.hasOwn(categoryLabels, params.get('category'))) state.category = params.get('category')
+  if (state.tab === 'skins' && Object.hasOwn(kindLabels, params.get('kind'))) state.kind = params.get('kind')
+  if (state.tab !== 'plugins') state.tag = params.get('tag') || 'all'
 }
 
 async function start() {

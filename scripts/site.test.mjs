@@ -26,7 +26,7 @@ const catalog = {
 function loadSite(base = '/', data = catalog) {
   const app = { innerHTML: '', className: '' }
   const context = vm.createContext({
-    URL, basePath: base, inputCatalog: structuredClone(data), location: { hash: '' },
+    URL, URLSearchParams, basePath: base, inputCatalog: structuredClone(data), location: { hash: '' },
     createIcons() {},
     document: {
       querySelector: selector => selector === '#app' ? app : null,
@@ -235,7 +235,7 @@ test('skin search covers both formats without inheriting functional category fil
   for (const query of ['Example Skin', 'dev.example.skin', 'ui-skin-loader', 'bodyAttr:theme']) {
     site.run(`state.query = ${JSON.stringify(query)}; render()`)
     assert.match(site.app.innerHTML, /data-select="dev.example.skin"/)
-    assert.doesNotMatch(site.app.innerHTML, /data-select="maid-atelier"/)
+    if (query !== 'Example Skin') assert.doesNotMatch(site.app.innerHTML, /data-select="maid-atelier"/)
   }
   for (const query of ['Abyssal Maid Atelier', 'Prompt 资料', 'maid', '女仆', '浅色', '深色']) {
     site.run(`state.query = ${JSON.stringify(query)}; render()`)
@@ -375,7 +375,7 @@ for (const base of ['/', '/dsh-mojobox/']) {
     assert.match(html, /Test developer/)
     assert.match(html, /@example\/test-only/)
     assert.doesNotMatch(html, />Lock<|data-open-plugin|有效通过等级/)
-    site.run('state.query = "does-not-exist"; render()')
+    site.run('state.selected = null; state.query = "does-not-exist"; render()')
     assert.match(site.app.innerHTML, /没有匹配项/)
   })
 }
@@ -439,4 +439,68 @@ test('clipboard denial offers a manual digest instead of an unhandled rejection'
   await site.run('handler()')
   assert.equal(site.run('button.title'), '复制失败，请手动选择摘要')
   assert.equal(site.run('button.previousElementSibling.style.whiteSpace'), 'normal')
+})
+
+test('intake search matches multiple words across authors, components and introductions', () => {
+  const data = structuredClone(mixedIntake)
+  data.packs[0].metadata.introduction = '适合代码审查与协同开发'
+  const site = loadSite('/', data)
+  site.run('state.tab = "packs"')
+  for (const query of ['TEST　ＤＥＶＥＬＯＰＥＲ', '代码审查 @example/test-only', '协同开发 AIO', 'example.org developer']) {
+    site.run(`state.query = ${JSON.stringify(query)}`)
+    assert.equal(site.run('filteredItems().length'), 1, query)
+  }
+  site.run('state.query = "代码审查 不存在的关键词"')
+  assert.equal(site.run('filteredItems().length'), 0)
+})
+
+test('relevance puts name matches before description and source matches with stable name sorting', () => {
+  const data = { mode: 'intake', packs: [], plugins: [
+    { ...listing, id: 'org.example.description', name: 'A 插件', summary: '寻找 Git 工具' },
+    { ...listing, id: 'org.example.name', name: 'Git 工具', summary: '版本管理' }
+  ] }
+  const site = loadSite('/', data)
+  site.run('state.query = "git"')
+  assert.equal(site.run('filteredItems()[0].id'), 'org.example.name')
+  site.run('state.sort = "name"')
+  assert.equal(site.run('filteredItems()[0].id'), 'org.example.description')
+})
+
+test('tags, skin format and keyword filters intersect without treating prompt material as an archive', () => {
+  const site = loadSite('/', mixedIntake)
+  site.run('state.tab = "skins"; state.tag = "maid"; state.kind = "prompt"; state.query = "女仆"')
+  assert.equal(site.run('filteredItems()[0].metadata.id'), 'maid-atelier')
+  assert.equal(site.run('filteredItems().length'), 1)
+  site.run('state.kind = "archive"')
+  assert.equal(site.run('filteredItems().length'), 0)
+  site.run('Object.assign(state, searchDefaults); state.tab = "packs"; state.tag = "test-only"')
+  assert.equal(site.run('filteredItems().length'), 1)
+})
+
+test('shareable search routes restore conditions, retain detail back links and isolate resource types', () => {
+  const site = loadSite('/EAC-mojobox/', mixedIntake)
+  site.run('location.hash = "#/skins?kind=prompt&tag=maid&q=女仆&sort=name"; applyHash(); render()')
+  assert.equal(site.run('filteredItems().length'), 1)
+  assert.match(site.app.innerHTML, /value="prompt" selected/)
+  assert.match(site.app.innerHTML, /value="maid" selected/)
+  const listHash = site.run('catalogHash()')
+  site.run('location.hash = catalogHash("skins", "maid-atelier"); applyHash(); render()')
+  assert.match(site.app.innerHTML, /class="catalog-page is-detail"/)
+  assert.ok(site.app.innerHTML.includes(listHash.replaceAll('&', '&amp;')))
+  site.run('location.hash = catalogHash("skins", null); applyHash(); render()')
+  assert.equal(site.run('filteredItems().length'), 1)
+  site.run('location.hash = "#/plugins?kind=prompt&tag=maid&sort=invalid&availability=invalid"; applyHash()')
+  assert.equal(site.run('state.tag'), 'all')
+  assert.equal(site.run('state.kind'), 'all')
+  assert.equal(site.run('state.sort'), 'relevance')
+  assert.equal(site.run('state.availability'), 'all')
+})
+
+test('unknown and malicious search tags stay visible, escaped and resettable', () => {
+  const site = loadSite('/', mixedIntake)
+  site.run('location.hash = "#/skins?tag=%3Cscript%3E&q=%22%3E%3Cimg%20src=x%3E"; applyHash(); render()')
+  assert.match(site.app.innerHTML, /没有匹配项/)
+  assert.match(site.app.innerHTML, /&lt;script&gt;/)
+  assert.match(site.app.innerHTML, /data-reset-search/)
+  assert.doesNotMatch(site.app.innerHTML, /<script>|<img src=x>/)
 })
