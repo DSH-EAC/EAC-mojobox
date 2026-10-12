@@ -334,7 +334,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .catalog-count { display: grid; justify-items: end; gap: 3px; padding-bottom: 4px; }
 .catalog-count strong { font-size: 2.1rem; letter-spacing: -.05em; }
 .catalog-count span { color: var(--muted); font-size: .7rem; }
-.catalog-toolbar { display: flex; align-items: center; gap: 14px; margin: 22px 0; }
+.catalog-toolbar { display: grid; gap: 14px; margin: 22px 0 10px; }
+.catalog-filter-row { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
+.catalog-filter-row .command { min-height: 46px; }
+.catalog-search-note { margin: 0 0 22px; color: var(--muted); font-size: .73rem; line-height: 1.7; }
 .catalog-toolbar .search-field { flex: 1; min-height: 46px; margin-top: 0; border-radius: 8px; }
 .catalog-filter { min-width: 160px; display: grid; gap: 5px; color: var(--muted); font-size: .68rem; font-weight: 700; }
 .catalog-filter select { width: 100%; height: 46px; margin-top: 0; padding: 0 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font-size: .8rem; }
@@ -467,9 +470,12 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .catalog-page { padding: 33px 16px 48px; }
   .catalog-intro { align-items: start; }
   .catalog-intro h1 { font-size: 2rem; }
-  .catalog-count { display: none; }
+  .catalog-count { flex-shrink: 0; }
+  .catalog-count strong { font-size: 1.5rem; }
+  .catalog-count span { font-size: .6rem; }
   .catalog-toolbar { display: grid; align-items: stretch; gap: 10px; }
   .catalog-filter { min-width: 0; }
+  .catalog-filter-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; gap: 10px; }
   .catalog-toolbar .search-field, .catalog-filter select { min-height: 43px; height: 43px; }
   .catalog-hint { padding: 5px 0; }
   .detail-page-body { padding: 12px 0; }
